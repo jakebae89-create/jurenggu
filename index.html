@@ -86,6 +86,7 @@
     padding:3px 12px; border-radius:999px; margin-bottom:12px;
   }
   #result .hanja{ font-family:"Noto Serif KR",serif; font-weight:900; font-size:40px; letter-spacing:8px; color:#b5302a;}
+  #result .hanja .read{ font-family:"Noto Sans KR",sans-serif; font-weight:700; font-size:.46em; letter-spacing:1px; color:#7a4b1e; vertical-align:middle; }
   #result .hanja.penalty{ font-size:28px; letter-spacing:1px; line-height:1.4; }
   #result .hangul{ font-size:18px; font-weight:700; color:#5a3c20; margin-top:6px; letter-spacing:3px;}
   #result .desc{ font-size:17px; color:#3a2a1a; margin-top:14px; line-height:1.5; }
@@ -746,8 +747,7 @@ function updateRoll(now){
 function showResult(f, player){
   const body = f.edited
     ? `<div class="hanja penalty">${esc(f.rule.desc)}</div>`
-    : `<div class="hanja">${f.rule.hanja}</div>
-       <div class="hangul">${f.rule.hangul}</div>
+    : `<div class="hanja">${f.rule.hanja} <span class="read">(${f.rule.hangul})</span></div>
        <div class="desc"><b>벌칙</b> &nbsp;${esc(f.rule.desc)}</div>`;
   resultEl.innerHTML=`
     ${player?`<div class="who">🍶 ${esc(player)} 님</div>`:''}

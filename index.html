@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>주령구(酒令具) — 14면체 벌칙 주사위</title>
+<meta name="description" content="신라 동궁과 월지에서 출토된 14면체 벌칙 주사위 주령구. 친구들과 굴려서 나온 벌칙을 수행하는 전통 술자리 놀이." />
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="theme-color" content="#150a26" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="주령구" />
+<link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png" />
+<link rel="apple-touch-icon" href="./icons/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg0:#1a1310; --bg1:#2a1d16; --gold:#d8b46a; --red:#d23b2e;
+    --paper:#f3e6cf; --ink:#2b1d12;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:"Noto Sans KR",sans-serif;
+    color:var(--paper);
+    background:
+      radial-gradient(900px 520px at 15% 8%, rgba(190,40,140,.42), transparent 60%),
+      radial-gradient(900px 520px at 85% 12%, rgba(40,110,220,.40), transparent 60%),
+      radial-gradient(1000px 640px at 50% 112%, rgba(255,170,40,.36), transparent 62%),
+      linear-gradient(160deg,#2a103e 0%, #150a26 55%, #0c0712 100%);
+    background-attachment:fixed;
+    min-height:100%;
+    display:flex; flex-direction:column; align-items:center;
+    overflow-x:hidden;
+  }
+  header{ text-align:center; padding:22px 16px 6px; }
+  header h1{
+    font-family:"Noto Serif KR",serif; font-weight:900;
+    font-size:clamp(28px,5vw,44px); letter-spacing:6px;
+    background:linear-gradient(95deg,#ffe08a 0%,#ff9d5c 38%,#ff5fa2 72%,#b97bff 100%);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:transparent;
+    filter:drop-shadow(0 2px 10px rgba(255,90,160,.4));
+  }
+  header h1 .han{ -webkit-text-fill-color:#ffd76a; color:#ffd76a; font-size:.7em; letter-spacing:2px; }
+  header p{ margin-top:8px; color:#c8b89a; font-size:13px; letter-spacing:.5px; opacity:.85; }
+
+  #stage{ width:100%; max-width:720px; aspect-ratio:1/1; position:relative; touch-action:none; }
+  #stage canvas{ display:block; width:100%; height:100%; cursor:grab; }
+  #stage canvas:active{ cursor:grabbing; }
+
+  #hint{
+    position:absolute; bottom:8px; left:0; right:0; text-align:center;
+    font-size:12px; color:#9a8a70; pointer-events:none; opacity:.7;
+  }
+
+  .controls{ margin:4px 0 18px; }
+  #rollBtn{
+    font-family:"Noto Serif KR",serif; font-weight:700; font-size:20px; letter-spacing:8px;
+    color:#fff5e0; background:linear-gradient(180deg,#ff5fa2 0%,#e0245e 50%,#a01060 100%);
+    border:1px solid #ffd76a; border-radius:999px;
+    padding:14px 46px 14px 54px; cursor:pointer;
+    box-shadow:0 8px 28px rgba(255,40,140,.5), inset 0 1px 0 rgba(255,255,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+  }
+  #rollBtn:hover{ transform:translateY(-2px); box-shadow:0 12px 34px rgba(255,40,140,.62), inset 0 1px 0 rgba(255,255,255,.4);}
+  #rollBtn:active{ transform:translateY(1px) scale(.98); }
+  #rollBtn:disabled{ filter:grayscale(.5) brightness(.7); cursor:default; transform:none; }
+
+  #result{
+    width:min(92vw,560px); margin-bottom:40px;
+    background:linear-gradient(180deg,#f7ecd6,#ecdcbd);
+    color:var(--ink); border-radius:16px; padding:22px 24px;
+    box-shadow:0 14px 40px rgba(0,0,0,.5), 0 0 34px rgba(255,95,162,.28); border:1px solid #ffd76a;
+    text-align:center; opacity:0; transform:translateY(12px) scale(.98);
+    transition:opacity .35s ease, transform .35s ease; position:relative;
+  }
+  #result.show{ opacity:1; transform:none; }
+  #result .tag{
+    display:inline-block; font-size:12px; font-weight:700; letter-spacing:2px;
+    color:#7a4b1e; background:#e7d3a8; border:1px solid #cdb582;
+    padding:3px 12px; border-radius:999px; margin-bottom:12px;
+  }
+  #result .hanja{ font-family:"Noto Serif KR",serif; font-weight:900; font-size:40px; letter-spacing:8px; color:#b5302a;}
+  #result .hanja.penalty{ font-size:28px; letter-spacing:1px; line-height:1.4; }
+  #result .hangul{ font-size:18px; font-weight:700; color:#5a3c20; margin-top:6px; letter-spacing:3px;}
+  #result .desc{ font-size:17px; color:#3a2a1a; margin-top:14px; line-height:1.5; }
+  #result .desc b{ color:#b5302a; }
+  #result .placeholder{ color:#8a6c46; font-size:16px; }
+  #result .who{ font-size:16px; font-weight:700; color:#8e2820; margin-bottom:10px; letter-spacing:1px;}
+
+  [hidden]{ display:none !important; }
+
+  /* 참가자 설정 */
+  #setup{
+    width:min(92vw,520px); background:rgba(40,28,20,.55); border:1px solid #4a3326;
+    border-radius:14px; padding:16px; margin:6px 0 4px; backdrop-filter:blur(4px);
+  }
+  .setup-row{ display:flex; gap:8px; }
+  #nameInput{
+    flex:1; padding:11px 13px; border-radius:9px; border:1px solid #5a4636;
+    background:#1b1310; color:var(--paper); font-size:15px; font-family:inherit;
+  }
+  #nameInput:focus{ outline:none; border-color:var(--gold); }
+  #nameInput:disabled{ opacity:.5; }
+  #addBtn,#startBtn{ font-family:inherit; font-weight:700; border-radius:9px; cursor:pointer; border:1px solid #e8b27a; }
+  #addBtn{ background:#3a2820; color:var(--gold); padding:11px 18px; }
+  #addBtn:disabled{ opacity:.4; cursor:default; }
+  #playerList{ display:flex; flex-wrap:wrap; gap:7px; margin:13px 0; min-height:6px; }
+  .chip{
+    display:inline-flex; align-items:center; gap:7px; background:#2e2018; border:1px solid #5a4636;
+    color:#f0e2c8; padding:5px 8px 5px 13px; border-radius:999px; font-size:13.5px;
+  }
+  .chip button{
+    border:none; background:#7a3027; color:#fff; width:19px; height:19px;
+    border-radius:50%; cursor:pointer; font-size:12px; line-height:1; padding:0;
+  }
+  .setup-actions{ display:flex; justify-content:space-between; align-items:center; }
+  .action-btns{ display:flex; gap:8px; }
+  #count{ font-size:13px; color:#c8b89a; }
+
+  /* 벌칙 편집기 */
+  #editor{ margin-top:14px; border-top:1px solid #4a3326; padding-top:12px; }
+  .editor-head{ display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#ffd76a; margin-bottom:10px; }
+  #ruleRows{ max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:7px; padding-right:4px; }
+  .rule-row{ display:flex; gap:6px; align-items:center; }
+  .rule-type{
+    flex:0 0 22px; width:22px; height:22px; border-radius:6px; font-size:12px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; color:#fff;
+  }
+  .rule-type.sq{ background:#c01e7a; }
+  .rule-type.hx{ background:#2d6ad0; }
+  .rule-row input{
+    background:#1b1310; color:var(--paper); border:1px solid #5a4636; border-radius:7px;
+    padding:7px 9px; font-size:13px; font-family:inherit; min-width:0;
+  }
+  .rule-row input:focus{ outline:none; border-color:var(--gold); }
+  .rule-row .r-hanja{ flex:0 0 84px; text-align:center; }
+  .rule-row .r-hangul{ flex:0 0 84px; text-align:center; }
+  .rule-row .r-desc{ flex:1 1 auto; }
+  .editor-foot{ display:flex; justify-content:flex-end; margin-top:12px; }
+  #confirmEdit{
+    font-family:inherit; font-weight:700; font-size:14px; letter-spacing:2px; cursor:pointer;
+    color:#fff5e0; background:linear-gradient(180deg,#ff5fa2,#c01e7a);
+    border:1px solid #ffd76a; border-radius:9px; padding:10px 28px;
+    box-shadow:0 6px 18px rgba(255,40,140,.4);
+  }
+  #confirmEdit:hover{ filter:brightness(1.08); }
+  #startBtn{ background:linear-gradient(180deg,#ff5fa2,#c01e7a); color:#fff5e0; letter-spacing:2px; padding:11px 24px; box-shadow:0 6px 18px rgba(255,40,140,.4); }
+  #startBtn:disabled{ filter:grayscale(.5) brightness(.7); cursor:default; }
+
+  #turn{
+    font-family:"Noto Serif KR",serif; font-size:20px; font-weight:700;
+    letter-spacing:2px; margin:6px 0 2px; text-align:center;
+    background:linear-gradient(90deg,#ffd76a,#ff7a59,#ff5fa2);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;
+  }
+  #turn b{ -webkit-text-fill-color:#7dffea; color:#7dffea; font-size:1.15em; }
+  .controls{ display:flex; gap:12px; align-items:center; }
+  button.ghost{
+    background:transparent; border:1px solid #5a4636; color:#c8b89a; border-radius:999px;
+    padding:10px 18px; font-family:inherit; cursor:pointer; font-size:13px;
+  }
+  button.ghost:hover{ border-color:var(--gold); color:var(--gold); }
+
+  footer{ color:#6f6150; font-size:11px; padding:0 0 24px; text-align:center; line-height:1.6;}
+</style>
+</head>
+<body>
+  <header>
+    <h1>주령구 <span class="han">酒令具</span></h1>
+    <p>신라 동궁과 월지에서 출토된 14면체 벌칙 주사위 · 굴려서 나온 면의 벌칙을 수행하세요</p>
+  </header>
+
+  <div id="setup">
+    <div class="setup-row">
+      <input id="nameInput" type="text" maxlength="10" placeholder="참가자 이름 입력 (최대 14명)" autocomplete="off" />
+      <button id="addBtn">추가</button>
+    </div>
+    <div id="playerList"></div>
+    <div class="setup-actions">
+      <span id="count">0 / 14명</span>
+      <span class="action-btns">
+        <button id="editBtn" class="ghost">벌칙 수정</button>
+        <button id="startBtn" disabled>게임 시작</button>
+      </span>
+    </div>
+
+    <div id="editor" hidden>
+      <div class="editor-head">
+        <span>벌칙 수정 — 설명</span>
+        <button id="resetRules" class="ghost">기본값 복원</button>
+      </div>
+      <div id="ruleRows"></div>
+      <div class="editor-foot">
+        <button id="confirmEdit">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="stage">
+    <div id="hint">드래그로 회전 · 휠로 확대/축소</div>
+  </div>
+
+  <div id="turn" hidden></div>
+
+  <div class="controls" hidden>
+    <button id="rollBtn">굴 리 기</button>
+    <button id="resetBtn" class="ghost">참가자 재설정</button>
+  </div>
+
+  <div id="result">
+    <div class="placeholder">주사위를 굴리면 이곳에 벌칙이 나타납니다.</div>
+  </div>
+
+  <footer>
+    정사각형 6면 · 정육각형 8면 = 14면 &nbsp;|&nbsp; 각 면이 나올 확률 1/14
+  </footer>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/three.module.js",
+    "three/addons/": "./vendor/three/addons/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
+
+// ---- 14가지 벌칙 데이터 ----
+const SQUARE_RULES = [
+  { hanja:'禁聲作舞', hangul:'금성작무', desc:'소리 없이 춤추기' },
+  { hanja:'衆人打鼻', hangul:'중인타비', desc:'여러 사람이 코를 두드리기' },
+  { hanja:'飮盡大笑', hangul:'음진대소', desc:'술을 다 마시고 크게 웃기' },
+  { hanja:'三盞一去', hangul:'삼잔일거', desc:'한 번에 술 석 잔 마시기' },
+  { hanja:'有犯空過', hangul:'유범공과', desc:'덤벼드는 사람이 있어도 참고 가만히 있기' },
+  { hanja:'自唱自飮', hangul:'자창자음', desc:'스스로 노래 부르고 마시기' },
+];
+const HEX_RULES = [
+  { hanja:'曲臂則盡', hangul:'곡비즉진', desc:'팔을 구부려 다 마시기' },
+  { hanja:'弄面孔過', hangul:'농면공과', desc:'얼굴 간지럼을 태워도 꼼짝 않기' },
+  { hanja:'任意請歌', hangul:'임의청가', desc:'누구에게나 마음대로 노래 청하기' },
+  { hanja:'月鏡一曲', hangul:'월경일곡', desc:'월경 한 곡조 부르기' },
+  { hanja:'空詠詩過', hangul:'공영시과', desc:'시 한 수 읊기' },
+  { hanja:'兩盞則放', hangul:'양잔즉방', desc:'술 두 잔이 있으면 쏟아버리기' },
+  { hanja:'醜物莫放', hangul:'추물막방', desc:'더러운 물건을 버리지 않기' },
+  { hanja:'自唱怪來晚', hangul:'자창괴래만', desc:"스스로 '괴래만'이라는 노래 부르기" },
+];
+
+// 면적을 거의 같게: 꼭짓점 (0,±B,±C). 정규(C=2B) 대신 사각·육각 면적이 같아지는 비율 사용
+// 사각형 면적 = 2B² , 육각형 면적 = (√3/2)(C²+2BC−2B²) → C/B = −1+√(3+4/√3) ≈ 1.3042
+const B = 1;
+const C = -1 + Math.sqrt(3 + 4/Math.sqrt(3));
+
+// 면 중심(부호/축 정보로 면 꼭짓점 선택용): 사각형 6 (±C 축), 육각형 8 (±1,±1,±1 방향)
+const SQUARE_CENTERS = [
+  [C,0,0],[-C,0,0],[0,C,0],[0,-C,0],[0,0,C],[0,0,-C],
+];
+const HEX_CENTERS = [
+  [1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],[-1,1,-1],[-1,-1,1],[-1,-1,-1],
+];
+
+// ---- 24개 꼭짓점: (0,±B,±C)의 모든 순열 ----
+function buildVertices(){
+  const mags=[0,B,C];
+  const perms=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
+  const seen=new Set(), out=[];
+  for(const p of perms){
+    for(let sx=-1;sx<=1;sx+=2) for(let sy=-1;sy<=1;sy+=2) for(let sz=-1;sz<=1;sz+=2){
+      const v=[mags[p[0]]*sx, mags[p[1]]*sy, mags[p[2]]*sz];
+      const k=v.join(',');
+      if(!seen.has(k)){ seen.add(k); out.push(v); }
+    }
+  }
+  return out.map(v=>new THREE.Vector3(...v));
+}
+const VERTS = buildVertices();
+
+// 면에 속한 꼭짓점 선택
+function squareFaceVerts(center){
+  const ai = center.findIndex(c=>c!==0);
+  const val = center[ai];
+  return VERTS.filter(v=>v.getComponent(ai)===val);
+}
+function hexFaceVerts(center){
+  const [sx,sy,sz]=center;
+  return VERTS.filter(v=> v.x*sx>=0 && v.y*sy>=0 && v.z*sz>=0);
+}
+
+// 긴 설명을 maxW 폭에 맞춰 줄바꿈
+function wrapText(g, text, maxW){
+  const lines=[]; let line='';
+  for(const ch of [...text]){
+    const t=line+ch;
+    if(line && g.measureText(t).width>maxW){ lines.push(line); line=ch; }
+    else line=t;
+  }
+  if(line) lines.push(line);
+  return lines;
+}
+
+// 텍스처. full=true: 한자+한글+설명(기본 주령구), full=false: 설명만(수정 내용). glow=true: 형광 발광
+function makeTexture(rule, hanjaColor='#d8463a', hangulColor='#e7c997', glow=false, full=true){
+  const S=320, c=document.createElement('canvas'); c.width=c.height=S;
+  const g=c.getContext('2d');
+  const grd=g.createRadialGradient(S/2,S*0.42,30,S/2,S/2,S*0.7);
+  grd.addColorStop(0, glow?'#0e1a12':'#241a14'); grd.addColorStop(1,'#090a08');
+  g.fillStyle=grd; g.fillRect(0,0,S,S);
+
+  g.textAlign='center'; g.textBaseline='middle';
+  const R=96;
+  if(full){
+    // ===== 기본 주령구: 한자 + 한글 + 설명(박스), 면 안에 자동 맞춤 =====
+    const chars=[...(rule.hanja||'')];
+    const hg=rule.hangul||'';
+    const ds='';   // 설명은 면에 표시하지 않음 (한자+한글만)
+    const HF=42, GF=19, DF=15, GAP=7, PADX=10, PADY=6;
+    const N=chars.length;
+    const rows=N?Math.max(1,Math.round(Math.sqrt(N))):0;
+    const cols=N?Math.ceil(N/rows):0;
+    const cell=HF*1.14, hanjaH=rows*cell;
+
+    g.font=`500 ${DF}px "Noto Sans KR", sans-serif`;
+    let dW=150, descLines=ds?wrapText(g, ds, dW):[];
+    while(descLines.length>2 && dW<360){ dW+=20; descLines=wrapText(g, ds, dW); } // 설명 최대 2줄
+    const descLineH=DF*1.2, descH=descLines.length*descLineH;
+    g.font=`700 ${GF}px "Noto Sans KR", sans-serif`;
+    const hgW=hg?g.measureText(hg).width:0;
+    g.font=`500 ${DF}px "Noto Sans KR", sans-serif`;
+    const descW=descLines.reduce((m,l)=>Math.max(m,g.measureText(l).width),0);
+
+    const tiers=[];
+    if(N) tiers.push({h:hanjaH, halfW:cols*cell/2});
+    if(hg) tiers.push({h:GF*1.2, halfW:hgW/2});
+    if(descLines.length) tiers.push({h:descH+PADY*2, halfW:descW/2+PADX});
+
+    const totalH=tiers.reduce((a,t)=>a+t.h,0)+GAP*Math.max(0,tiers.length-1);
+    let off=-totalH/2, maxDist=1;
+    for(const t of tiers){
+      const cy=off+t.h/2;
+      maxDist=Math.max(maxDist, Math.hypot(t.halfW, Math.abs(cy)+t.h/2));
+      off+=t.h+GAP;
+    }
+    const s=Math.min(1.25, R/maxDist);
+
+    let y=160-(totalH*s)/2;
+    if(N){                                  // 한자: 입력 순서 그대로
+      g.fillStyle=hanjaColor;
+      g.shadowColor=glow?hanjaColor:'rgba(0,0,0,.6)'; g.shadowBlur=glow?15*s:4*s;
+      g.font=`900 ${HF*s}px "Noto Serif KR", serif`;
+      const cs=cell*s; let idx=0;
+      for(let r=0;r<rows && idx<N;r++){
+        const inRow=Math.min(cols, N-idx);
+        const rsx=160-(inRow*cs)/2+cs/2, cy=y+r*cs+cs/2;
+        for(let cl=0;cl<inRow;cl++) g.fillText(chars[idx++], rsx+cl*cs, cy);
+      }
+      y+=hanjaH*s+GAP*s;
+    }
+    if(hg){                                 // 한글
+      g.shadowBlur=glow?8*s:0;
+      g.fillStyle=hangulColor;
+      g.font=`700 ${GF*s}px "Noto Sans KR", sans-serif`;
+      g.fillText(hg, 160, y+(GF*1.2*s)/2);
+      y+=GF*1.2*s+GAP*s;
+    }
+    if(descLines.length){                   // 설명 박스 + 텍스트
+      g.shadowBlur=0;
+      const boxH=(descH+PADY*2)*s, boxW=(descW+PADX*2)*s, bx=160-boxW/2, rr=8*s;
+      g.fillStyle=glow?'rgba(36,86,46,.55)':'rgba(0,0,0,.34)';
+      g.strokeStyle=glow?'rgba(150,255,160,.65)':'rgba(220,200,160,.5)';
+      g.lineWidth=Math.max(1,1.2*s);
+      g.beginPath();
+      g.moveTo(bx+rr,y);
+      g.arcTo(bx+boxW,y,bx+boxW,y+boxH,rr);
+      g.arcTo(bx+boxW,y+boxH,bx,y+boxH,rr);
+      g.arcTo(bx,y+boxH,bx,y,rr);
+      g.arcTo(bx,y,bx+boxW,y,rr);
+      g.closePath(); g.fill(); g.stroke();
+      g.fillStyle=glow?'#d8ffd8':'#ecdcbd';
+      g.font=`500 ${DF*s}px "Noto Sans KR", sans-serif`;
+      const lh=descLineH*s;
+      descLines.forEach((ln,k)=> g.fillText(ln, 160, y+PADY*s+lh*k+lh/2));
+    }
+  } else {
+    // ===== 수정된 면: 설명만 표시 (최대 3줄), 면 안에 자동 맞춤 =====
+    const text=(rule.desc||'').trim();
+    if(text){
+      const BF=30;
+      g.font=`700 ${BF}px "Noto Sans KR", sans-serif`;
+      let maxW=170, lines=wrapText(g, text, maxW);
+      while(lines.length>3 && maxW<700){ maxW+=20; lines=wrapText(g, text, maxW); }
+      const lineH=BF*1.25, totalH=lines.length*lineH;
+      let maxDist=1;
+      lines.forEach((l,k)=>{
+        const cy=-totalH/2 + lineH*k + lineH/2;
+        maxDist=Math.max(maxDist, Math.hypot(g.measureText(l).width/2, Math.abs(cy)+lineH/2));
+      });
+      const s=Math.min(1.5, R/maxDist);
+      g.fillStyle=hanjaColor;
+      g.shadowColor=glow?hanjaColor:'rgba(0,0,0,.55)'; g.shadowBlur=glow?14*s:4*s;
+      g.font=`700 ${BF*s}px "Noto Sans KR", sans-serif`;
+      const lh=lineH*s, y0=160-(totalH*s)/2;
+      lines.forEach((l,k)=> g.fillText(l, 160, y0+lh*k+lh/2));
+    }
+  }
+
+  const tex=new THREE.CanvasTexture(c);
+  tex.anisotropy=8; tex.colorSpace=THREE.SRGBColorSpace;
+  return tex;
+}
+
+// 한 면(다각형) 메쉬 생성 + 노멀 반환
+const R_MAX = 1.02; // 텍스처 스케일 통일 (사각형 외접반경 = B = 1.0)
+function buildFace(rawVerts){
+  const center=new THREE.Vector3();
+  rawVerts.forEach(v=>center.add(v));
+  center.multiplyScalar(1/rawVerts.length);
+  const N=center.clone().normalize();
+  // 면 내 로컬 좌표축
+  let u = Math.abs(N.y)<0.95
+    ? new THREE.Vector3(0,1,0).cross(N).normalize()
+    : new THREE.Vector3(1,0,0).cross(N).normalize();
+  const v = N.clone().cross(u).normalize();
+
+  // 중심 기준 각도로 정렬
+  const sorted=[...rawVerts].sort((a,b)=>{
+    const da=a.clone().sub(center), db=b.clone().sub(center);
+    return Math.atan2(da.dot(v),da.dot(u)) - Math.atan2(db.dot(v),db.dot(u));
+  });
+
+  const pos=[], uv=[];
+  const n=sorted.length;
+  for(let i=0;i<n;i++){
+    const a=sorted[i], b=sorted[(i+1)%n];
+    for(const P of [center,a,b]){
+      pos.push(P.x,P.y,P.z);
+      const d=P.clone().sub(center);
+      uv.push(0.5 + d.dot(u)/(2*R_MAX), 0.5 + d.dot(v)/(2*R_MAX));
+    }
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv,2));
+  geo.computeVertexNormals();
+  return { geo, normal:N };
+}
+
+// ---- 씬 ----
+const stage=document.getElementById('stage');
+const scene=new THREE.Scene();
+const renderer=new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+stage.appendChild(renderer.domElement);
+
+const camera=new THREE.PerspectiveCamera(42,1,0.1,100);
+camera.position.set(3.4,4.2,7.2);
+
+const controls=new OrbitControls(camera, renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=0.08;
+controls.enablePan=false; controls.minDistance=5; controls.maxDistance=14;
+controls.target.set(0,0,0);
+
+scene.add(new THREE.HemisphereLight(0xfff0d8,0x2a1c12,0.9));
+const key=new THREE.DirectionalLight(0xffffff,1.25); key.position.set(5,8,6); scene.add(key);
+const fill=new THREE.DirectionalLight(0xffd9a0,0.5); fill.position.set(-6,-2,-4); scene.add(fill);
+const glowA=new THREE.PointLight(0xff3da6,0.85,40); glowA.position.set(-6,3,5); scene.add(glowA);
+const glowB=new THREE.PointLight(0x3da6ff,0.7,40); glowB.position.set(6,-1,4); scene.add(glowB);
+
+const die=new THREE.Group(); scene.add(die);
+
+// 어두운 코어 (속이 비치지 않게)
+const core=new THREE.Mesh(
+  new ConvexGeometry(VERTS).scale(0.985,0.985,0.985),
+  new THREE.MeshStandardMaterial({color:0x0c0907, roughness:0.85, metalness:0.1})
+);
+die.add(core);
+
+// 모서리 라인
+const edges=new THREE.LineSegments(
+  new THREE.EdgesGeometry(new ConvexGeometry(VERTS),1),
+  new THREE.LineBasicMaterial({color:0x4a3326})
+);
+die.add(edges);
+
+// 14개 텍스처 면
+const faces=[]; // {normal, rule, type}
+function addFace(rawVerts, rule, type){
+  const {geo,normal}=buildFace(rawVerts);
+  const base=makeTexture(rule);
+  const mat=new THREE.MeshStandardMaterial({
+    map:base, roughness:0.5, metalness:0.18, side:THREE.DoubleSide
+  });
+  const mesh=new THREE.Mesh(geo,mat);
+  // 살짝 바깥으로 띄워 코어 위에 얹기
+  mesh.position.copy(normal.clone().multiplyScalar(0.012));
+  die.add(mesh);
+  faces.push({normal, rule, type, mat, baseTex:base, lit:false, edited:false});
+}
+SQUARE_CENTERS.forEach((c,i)=> addFace(squareFaceVerts(c), SQUARE_RULES[i], '사각형'));
+HEX_CENTERS.forEach((c,i)=> addFace(hexFaceVerts(c), HEX_RULES[i], '육각형'));
+
+// 기본 벌칙 스냅샷 (복원용) + 단일 면 텍스처 갱신
+const DEFAULT_RULES = faces.map(f=>({...f.rule}));
+function refreshFace(i){
+  const f=faces[i];
+  const full=!f.edited;                     // 수정 안 한 면=기본(한자+한글+설명), 수정한 면=설명만
+  if(f.baseTex) f.baseTex.dispose();
+  f.baseTex=makeTexture(f.rule, undefined, undefined, false, full);
+  if(f.lit){ // 형광으로 빛나는 면이면 형광 텍스처도 즉시 갱신
+    if(f.neonTex) f.neonTex.dispose();
+    f.neonTex=makeTexture(f.rule, NEON_HANJA, NEON_HANGUL, true, full);
+    f.mat.map=f.neonTex; f.mat.emissiveMap=f.neonTex;
+  } else {
+    f.mat.map=f.baseTex;
+  }
+  f.mat.needsUpdate=true;
+}
+
+// ---- 저장/복원 (localStorage) ----
+const LS_PLAYERS='jurenggu.players', LS_RULES='jurenggu.rules';
+function saveRules(){
+  try{
+    localStorage.setItem(LS_RULES, JSON.stringify(
+      faces.map(f=>({ hanja:f.rule.hanja, hangul:f.rule.hangul, desc:f.rule.desc, edited:f.edited }))
+    ));
+  }catch(e){}
+}
+function loadRules(){
+  try{
+    const arr=JSON.parse(localStorage.getItem(LS_RULES)||'null');
+    if(!Array.isArray(arr)) return;
+    faces.forEach((f,i)=>{
+      const r=arr[i]; if(!r) return;
+      if(typeof r.hanja==='string') f.rule.hanja=r.hanja;
+      if(typeof r.hangul==='string') f.rule.hangul=r.hangul;
+      if(typeof r.desc==='string') f.rule.desc=r.desc;
+      f.edited=!!r.edited;
+      refreshFace(i);
+    });
+  }catch(e){}
+}
+loadRules();
+
+// ---- 굴리기 애니메이션 ----
+const rollBtn=document.getElementById('rollBtn');
+const resultEl=document.getElementById('result');
+let hasRolled=false;
+const roll={ active:false };
+
+// ---- 참가자 / 차례 관리 (최대 14명) ----
+const MAX_PLAYERS=14;
+let players=[];
+let curIdx=0;
+let gameStarted=false;
+
+const setupEl=document.getElementById('setup');
+const nameInput=document.getElementById('nameInput');
+const addBtn=document.getElementById('addBtn');
+const startBtn=document.getElementById('startBtn');
+const playerList=document.getElementById('playerList');
+const countEl=document.getElementById('count');
+const turnEl=document.getElementById('turn');
+const controlsEl=document.querySelector('.controls');
+const resetBtn=document.getElementById('resetBtn');
+
+const esc=s=>s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+function savePlayers(){
+  try{ localStorage.setItem(LS_PLAYERS, JSON.stringify(players)); }catch(e){}
+}
+function loadPlayers(){
+  try{
+    const arr=JSON.parse(localStorage.getItem(LS_PLAYERS)||'null');
+    if(Array.isArray(arr)) players=arr.filter(p=>typeof p==='string').slice(0,MAX_PLAYERS);
+  }catch(e){}
+}
+
+function addPlayer(){
+  if(players.length>=MAX_PLAYERS) return;
+  let name=nameInput.value.trim();
+  if(!name) name='참가자 '+(players.length+1);
+  players.push(name);
+  nameInput.value='';
+  renderPlayers();
+  savePlayers();
+  nameInput.focus();
+}
+function removePlayer(i){ players.splice(i,1); renderPlayers(); savePlayers(); }
+function renderPlayers(){
+  playerList.innerHTML=players.map((p,i)=>
+    `<span class="chip">${esc(p)}<button data-i="${i}" title="삭제">×</button></span>`).join('');
+  playerList.querySelectorAll('button').forEach(b=>
+    b.addEventListener('click',()=>removePlayer(+b.dataset.i)));
+  countEl.textContent=players.length+' / '+MAX_PLAYERS+'명';
+  addBtn.disabled=players.length>=MAX_PLAYERS;
+  nameInput.disabled=players.length>=MAX_PLAYERS;
+  startBtn.disabled=players.length===0;
+}
+function startGame(){
+  if(players.length===0) return;
+  gameStarted=true; curIdx=0;
+  setupEl.hidden=true; controlsEl.hidden=false; turnEl.hidden=false;
+  resultEl.classList.remove('show');
+  updateTurn();
+}
+function updateTurn(){
+  turnEl.innerHTML=`${curIdx+1} / ${players.length} · <b>${esc(players[curIdx])}</b> 님 차례`;
+}
+function nextTurn(){
+  curIdx=(curIdx+1)%players.length;
+  updateTurn();
+}
+function resetGame(){
+  gameStarted=false;
+  setupEl.hidden=false; controlsEl.hidden=true; turnEl.hidden=true;
+  unlightFaces();
+  renderPlayers();
+}
+addBtn.addEventListener('click', addPlayer);
+nameInput.addEventListener('keydown', e=>{ if(e.key==='Enter') addPlayer(); });
+startBtn.addEventListener('click', startGame);
+resetBtn.addEventListener('click', resetGame);
+loadPlayers();
+renderPlayers();
+
+// ---- 벌칙 편집기 ----
+const editBtn=document.getElementById('editBtn');
+const editor=document.getElementById('editor');
+const ruleRows=document.getElementById('ruleRows');
+const resetRules=document.getElementById('resetRules');
+const refreshTimers={};
+function scheduleRefresh(i){
+  clearTimeout(refreshTimers[i]);
+  refreshTimers[i]=setTimeout(()=>refreshFace(i),250);
+}
+function renderEditor(){
+  ruleRows.innerHTML=faces.map((f,i)=>`
+    <div class="rule-row">
+      <span class="rule-type ${f.type==='사각형'?'sq':'hx'}" title="${f.type}">${f.type==='사각형'?'四':'六'}</span>
+      <input class="r-desc" data-i="${i}" data-k="desc" maxlength="40" value="${esc(f.rule.desc)}" placeholder="벌칙 설명" />
+    </div>`).join('');
+  ruleRows.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      const i=+inp.dataset.i;
+      faces[i].rule[inp.dataset.k]=inp.value;
+      faces[i].edited=true;                 // 수정한 면 → 벌칙(설명)만 표시
+      scheduleRefresh(i);
+      saveRules();
+    });
+  });
+}
+editBtn.addEventListener('click',()=>{
+  const show=editor.hidden;
+  editor.hidden=!show;
+  editBtn.textContent=show?'수정 닫기':'벌칙 수정';
+  if(show) renderEditor();
+});
+resetRules.addEventListener('click',()=>{
+  faces.forEach((f,i)=>{
+    f.rule.hanja=DEFAULT_RULES[i].hanja;    // 기본 주령구 내용으로 완전 복원
+    f.rule.hangul=DEFAULT_RULES[i].hangul;
+    f.rule.desc=DEFAULT_RULES[i].desc;
+    f.edited=false;                         // 면=한자+한글, 결과창=한자+한글+기본 벌칙
+    refreshFace(i);
+  });
+  saveRules();
+  renderEditor();
+});
+document.getElementById('confirmEdit').addEventListener('click',()=>{
+  faces.forEach((f,i)=>refreshFace(i)); // 보류 중인 변경 즉시 반영
+  editor.hidden=true;
+  editBtn.textContent='벌칙 수정';
+});
+
+// ---- 선택된 면 형광 발광 ----
+const NEON_HANJA='#39ff14', NEON_HANGUL='#b6ffb0';
+function unlightFaces(){
+  faces.forEach(f=>{
+    if(f.lit){
+      f.mat.map=f.baseTex; f.mat.emissiveMap=null;
+      f.mat.emissive.setHex(0x000000); f.mat.emissiveIntensity=0;
+      f.mat.needsUpdate=true; f.lit=false;
+    }
+  });
+}
+function lightFace(idx){
+  unlightFaces();
+  const f=faces[idx];
+  if(f.neonTex) f.neonTex.dispose();
+  f.neonTex=makeTexture(f.rule, NEON_HANJA, NEON_HANGUL, true, !f.edited);
+  f.mat.map=f.neonTex; f.mat.emissiveMap=f.neonTex;
+  f.mat.emissive.setHex(0xffffff); f.mat.emissiveIntensity=1.7;
+  f.mat.needsUpdate=true; f.lit=true;
+}
+
+function startRoll(){
+  if(roll.active || !gameStarted) return;
+  roll.active=true; hasRolled=true;
+  roll.player=players[curIdx];
+  unlightFaces();
+  rollBtn.disabled=true;
+  resultEl.classList.remove('show');
+
+  const idx=Math.floor(Math.random()*faces.length);
+  // 선택된 면이 카메라 정면을 향하도록
+  const front=camera.position.clone().sub(controls.target).normalize();
+  const q0=new THREE.Quaternion().setFromUnitVectors(faces[idx].normal, front);
+  const yaw=new THREE.Quaternion().setFromAxisAngle(front, Math.random()*Math.PI*2);
+  roll.target=yaw.multiply(q0);
+  roll.start=die.quaternion.clone();
+  roll.axis=new THREE.Vector3(Math.random()-.5,Math.random()-.5,Math.random()-.5).normalize();
+  roll.spins=Math.PI*2*(3+Math.random()*3);
+  roll.dur=2.4;
+  roll.t0=performance.now();
+  roll.idx=idx;
+}
+
+function updateRoll(now){
+  let p=Math.min((now-roll.t0)/1000/roll.dur,1);
+  const ease=1-Math.pow(1-p,3);
+  const tumble=new THREE.Quaternion()
+    .setFromAxisAngle(roll.axis, roll.spins*ease)
+    .multiply(roll.start);
+  let w = p<0.6 ? 0 : (p-0.6)/0.4;
+  w = w*w*(3-2*w);
+  die.quaternion.copy(tumble).slerp(roll.target, w);
+  if(p>=1){
+    die.quaternion.copy(roll.target);
+    roll.active=false;
+    rollBtn.disabled=false;
+    lightFace(roll.idx);
+    showResult(faces[roll.idx], roll.player);
+    nextTurn();
+  }
+}
+
+function showResult(f, player){
+  const body = f.edited
+    ? `<div class="hanja penalty">${esc(f.rule.desc)}</div>`
+    : `<div class="hanja">${f.rule.hanja}</div>
+       <div class="hangul">${f.rule.hangul}</div>
+       <div class="desc"><b>벌칙</b> &nbsp;${esc(f.rule.desc)}</div>`;
+  resultEl.innerHTML=`
+    ${player?`<div class="who">🍶 ${esc(player)} 님</div>`:''}
+    ${body}`;
+  void resultEl.offsetWidth;
+  resultEl.classList.add('show');
+}
+
+rollBtn.addEventListener('click', startRoll);
+
+// ---- 루프 / 리사이즈 ----
+function resize(){
+  const s=stage.clientWidth;
+  renderer.setSize(s,s,false);
+  camera.aspect=1; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+resize();
+
+function animate(now){
+  requestAnimationFrame(animate);
+  if(roll.active) updateRoll(now);
+  else if(!hasRolled) die.rotation.y += 0.0035; // 시작 전 천천히 회전
+  controls.update();
+  renderer.render(scene,camera);
+}
+
+// 웹폰트 로드 완료 후 텍스처를 다시 그려 한자 글꼴 보장
+if(document.fonts && document.fonts.ready){
+  document.fonts.ready.then(()=>{
+    faces.forEach(f=>{
+      if(f.baseTex) f.baseTex.dispose();
+      f.baseTex=makeTexture(f.rule, undefined, undefined, false, !f.edited);
+      if(!f.lit){ f.mat.map=f.baseTex; f.mat.needsUpdate=true; }
+    });
+  });
+}
+requestAnimationFrame(animate);
+</script>
+
+<script>
+// PWA 서비스 워커 등록 (오프라인 실행 지원)
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>

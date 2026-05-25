@@ -1,0 +1,18 @@
+# 앱 호스팅에 불필요한 파일 제외
+node_modules/
+package.json
+package-lock.json
+build_store_doc.js
+
+# 참고 자료 (웹앱과 무관)
+*.jpg
+*.jpeg
+*.png
+!icons/*.png
+*.docx
+
+# 백업본
+index - 복사본.html
+
+# 에디터/도구
+.claude/

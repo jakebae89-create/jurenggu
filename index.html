@@ -60,6 +60,7 @@
   .controls{ margin:6px 0 8px; flex:0 0 auto; }
   #rollBtn{
     font-family:"Noto Serif KR",serif; font-weight:700; font-size:20px; letter-spacing:8px;
+    white-space:nowrap; flex-shrink:0;
     color:#fff5e0; background:linear-gradient(180deg,#ff5fa2 0%,#e0245e 50%,#a01060 100%);
     border:1px solid #ffd76a; border-radius:999px;
     padding:14px 46px 14px 54px; cursor:pointer;
@@ -161,7 +162,7 @@
     -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;
   }
   #turn b{ -webkit-text-fill-color:#7dffea; color:#7dffea; font-size:1.15em; }
-  .controls{ display:flex; gap:12px; align-items:center; }
+  .controls{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:center; max-width:96vw; }
   button.ghost{
     background:transparent; border:1px solid #5a4636; color:#c8b89a; border-radius:999px;
     padding:10px 18px; font-family:inherit; cursor:pointer; font-size:13px;
@@ -215,7 +216,7 @@
 
   <div class="controls" hidden>
     <button id="rollBtn">굴 리 기</button>
-    <button id="resetBtn" class="ghost">참가자 재설정</button>
+    <button id="resetBtn" class="ghost">벌칙내용 및 참가자 재설정</button>
   </div>
 
   <footer>

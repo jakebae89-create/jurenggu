@@ -104,13 +104,13 @@
   }
   .setup-row{ display:flex; gap:8px; }
   #nameInput{
-    flex:1; padding:11px 13px; border-radius:9px; border:1px solid #5a4636;
+    flex:1 1 0; min-width:0; width:100%; padding:11px 13px; border-radius:9px; border:1px solid #5a4636;
     background:#1b1310; color:var(--paper); font-size:15px; font-family:inherit;
   }
   #nameInput:focus{ outline:none; border-color:var(--gold); }
   #nameInput:disabled{ opacity:.5; }
   #addBtn,#startBtn{ font-family:inherit; font-weight:700; border-radius:9px; cursor:pointer; border:1px solid #e8b27a; }
-  #addBtn{ background:#3a2820; color:var(--gold); padding:11px 18px; }
+  #addBtn{ background:#3a2820; color:var(--gold); padding:11px 18px; flex:0 0 auto; white-space:nowrap; }
   #addBtn:disabled{ opacity:.4; cursor:default; }
   #playerList{ display:flex; flex-wrap:wrap; gap:7px; margin:13px 0; min-height:6px; }
   .chip{

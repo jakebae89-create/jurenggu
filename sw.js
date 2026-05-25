@@ -1,5 +1,5 @@
 // 주령구 PWA 서비스 워커
-const CACHE = 'jurenggu-v1';
+const CACHE = 'jurenggu-v2';
 
 // 앱 실행에 필요한 로컬 자산 (오프라인 대비 미리 저장)
 const PRECACHE = [
@@ -31,20 +31,38 @@ self.addEventListener('activate', e => {
   );
 });
 
-// 캐시 우선 + 네트워크 폴백. 받아온 응답(구글 폰트 포함)은 런타임 캐시에 저장.
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
+
+  const isHTML = req.mode === 'navigate' ||
+    (req.headers.get('accept') || '').includes('text/html');
+
+  if (isHTML) {
+    // HTML: 네트워크 우선 → 항상 최신 화면, 오프라인이면 캐시로 폴백
+    e.respondWith(
+      fetch(req)
+        .then(res => {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match(req).then(h => h || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // 그 외 자산: stale-while-revalidate (캐시 즉시 반환 + 백그라운드 갱신)
   e.respondWith(
     caches.match(req).then(hit => {
-      if (hit) return hit;
-      return fetch(req).then(res => {
+      const fetchPromise = fetch(req).then(res => {
         if (res && res.status === 200) {
           const copy = res.clone();
           caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
         }
         return res;
       }).catch(() => hit);
+      return hit || fetchPromise;
     })
   );
 });

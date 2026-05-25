@@ -792,8 +792,17 @@ requestAnimationFrame(animate);
 <script>
 // PWA 서비스 워커 등록 (오프라인 실행 지원)
 if('serviceWorker' in navigator){
+  let refreshing=false;
+  // 새 서비스 워커가 제어권을 잡으면 한 번 새로고침해 최신 화면 반영
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(refreshing) return;
+    refreshing=true;
+    location.reload();
+  });
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    navigator.serviceWorker.register('./sw.js').then(reg=>{
+      reg.update();
+    }).catch(()=>{});
   });
 }
 </script>

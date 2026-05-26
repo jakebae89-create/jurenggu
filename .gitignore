@@ -16,3 +16,11 @@ index - 복사본.html
 
 # 에디터/도구
 .claude/
+
+# Play 스토어 패키지 / 서명 키 (절대 공개 저장소에 올리면 안 됨)
+주령구 주사위 - Google Play package/
+*.zip
+*.keystore
+*.aab
+*.apk
+signing-key-info.txt

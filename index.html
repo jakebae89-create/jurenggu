@@ -171,9 +171,18 @@
 
   footer{ color:#6f6150; font-size:11px; padding:2px 0 8px; text-align:center; line-height:1.5; flex:0 0 auto;}
   @media (max-height:620px){ footer{ display:none; } header p{ display:none; } }
+
+  #langBtn{
+    position:fixed; top:8px; right:8px; z-index:30;
+    background:rgba(40,28,20,.7); border:1px solid #5a4636; color:#e7c997;
+    border-radius:999px; padding:5px 13px; font-size:12px; font-weight:700;
+    font-family:inherit; cursor:pointer; backdrop-filter:blur(4px); letter-spacing:.5px;
+  }
+  #langBtn:hover{ border-color:var(--gold); color:var(--gold); }
 </style>
 </head>
 <body>
+  <button id="langBtn" type="button" aria-label="Language"></button>
   <header>
     <h1>주령구<span class="han">(酒令具)</span> 주사위</h1>
     <p>신라 동궁과 월지에서 출토된 14면체 벌칙 주사위 · 굴려서 나온 면의 벌칙을 수행하세요</p>
@@ -237,24 +246,74 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
 
-// ---- 14가지 벌칙 데이터 ----
+// ================= 다국어(i18n) =================
+// 기기 언어가 한국어면 ko, 아니면 en. 저장된 선택이 있으면 우선.
+const savedLang = (()=>{ try{ return localStorage.getItem('jurenggu.lang'); }catch(e){ return null; } })();
+let LANG = (savedLang==='ko'||savedLang==='en') ? savedLang
+         : ((navigator.language||'').toLowerCase().startsWith('ko') ? 'ko' : 'en');
+
+const STRINGS = {
+  ko: {
+    title: '주령구<span class="han">(酒令具)</span> 주사위',
+    subtitle: '신라 동궁과 월지에서 출토된 14면체 벌칙 주사위 · 굴려서 나온 면의 벌칙을 수행하세요',
+    namePlaceholder: '참가자 이름 입력 (최대 14명)',
+    add: '추가', editForfeits: '벌칙 수정', closeEditor: '수정 닫기', startGame: '게임 시작',
+    editorHead: '벌칙 수정 — 설명', restoreDefaults: '기본값 복원', done: '확인',
+    hint: '드래그로 회전 · 휠로 확대/축소',
+    resultPlaceholder: '주사위를 굴리면 이곳에 벌칙이 나타납니다.',
+    roll: '굴 리 기', resetAll: '벌칙내용 및 참가자 재설정',
+    footer: '정사각형 6면 · 정육각형 8면 = 14면 &nbsp;|&nbsp; 각 면이 나올 확률 1/14',
+    forfeitLabel: '벌칙', forfeitPlaceholder: '벌칙 설명',
+    square: '사각형', hexagon: '육각형', deleteTitle: '삭제', langBtn: 'EN',
+    defaultPlayer: n => '참가자 '+n,
+    count: n => n+' / 14명',
+    turn: (i,n,name) => `${i} / ${n} · <b>${name}</b> 님 차례`,
+    who: name => `🍶 ${name} 님`,
+  },
+  en: {
+    title: 'Juryeonggu <span class="han">(酒令具)</span> Dice',
+    subtitle: "A 14-sided forfeit die from Silla's Donggung Palace & Wolji Pond · Roll it and do the forfeit shown",
+    namePlaceholder: 'Enter player name (up to 14)',
+    add: 'Add', editForfeits: 'Edit forfeits', closeEditor: 'Close editor', startGame: 'Start game',
+    editorHead: 'Edit forfeits — description', restoreDefaults: 'Restore defaults', done: 'Done',
+    hint: 'Drag to rotate · Scroll to zoom',
+    resultPlaceholder: 'Roll the die and the forfeit will appear here.',
+    roll: 'ROLL', resetAll: 'Reset forfeits & players',
+    footer: '6 square faces · 8 hexagon faces = 14 &nbsp;|&nbsp; Each face: 1/14 chance',
+    forfeitLabel: 'Forfeit', forfeitPlaceholder: 'Forfeit description',
+    square: 'Square', hexagon: 'Hexagon', deleteTitle: 'Delete', langBtn: '한국어',
+    defaultPlayer: n => 'Player '+n,
+    count: n => n+' / 14',
+    turn: (i,n,name) => `${i} / ${n} · <b>${name}</b>'s turn`,
+    who: name => `🍶 ${name}`,
+  },
+};
+const S = () => STRINGS[LANG];
+// 면/결과에 표시할 읽기: 한국어=한글, 영어=로마자(read)
+const readingOf = rule => (LANG==='en' ? (rule.read || rule.hangul) : rule.hangul) || '';
+// 현재 언어의 벌칙 설명 키/값
+const descKey = () => LANG==='en' ? 'descEn' : 'desc';
+const getDesc = rule => { const k=descKey(); return (typeof rule[k]==='string') ? rule[k] : (rule.desc||''); };
+let lastShown = null; // 언어 전환 시 결과창 다시 그리기용
+
+// ---- 14가지 벌칙 데이터 (한자 / 한글 / 로마자 / 한국어 설명 / 영어 설명) ----
 const SQUARE_RULES = [
-  { hanja:'禁聲作舞', hangul:'금성작무', desc:'소리 없이 춤추기' },
-  { hanja:'衆人打鼻', hangul:'중인타비', desc:'여러 사람이 코를 두드리기' },
-  { hanja:'飮盡大笑', hangul:'음진대소', desc:'술을 다 마시고 크게 웃기' },
-  { hanja:'三盞一去', hangul:'삼잔일거', desc:'한 번에 술 석 잔 마시기' },
-  { hanja:'有犯空過', hangul:'유범공과', desc:'덤벼드는 사람이 있어도 참고 가만히 있기' },
-  { hanja:'自唱自飮', hangul:'자창자음', desc:'스스로 노래 부르고 마시기' },
+  { hanja:'禁聲作舞', hangul:'금성작무', read:'Geumseong-jangmu', desc:'소리 없이 춤추기', descEn:'Dance without making a sound' },
+  { hanja:'衆人打鼻', hangul:'중인타비', read:'Jungin-tabi', desc:'여러 사람이 코를 두드리기', descEn:'Let everyone tap your nose' },
+  { hanja:'飮盡大笑', hangul:'음진대소', read:'Eumjin-daeso', desc:'술을 다 마시고 크게 웃기', descEn:'Drink it all and laugh out loud' },
+  { hanja:'三盞一去', hangul:'삼잔일거', read:'Samjan-ilgeo', desc:'한 번에 술 석 잔 마시기', descEn:'Down three cups in one go' },
+  { hanja:'有犯空過', hangul:'유범공과', read:'Yubeom-gonggwa', desc:'덤벼드는 사람이 있어도 참고 가만히 있기', descEn:'Stay still even if someone provokes you' },
+  { hanja:'自唱自飮', hangul:'자창자음', read:'Jachang-jaeum', desc:'스스로 노래 부르고 마시기', descEn:'Sing a song yourself, then drink' },
 ];
 const HEX_RULES = [
-  { hanja:'曲臂則盡', hangul:'곡비즉진', desc:'팔을 구부려 다 마시기' },
-  { hanja:'弄面孔過', hangul:'농면공과', desc:'얼굴 간지럼을 태워도 꼼짝 않기' },
-  { hanja:'任意請歌', hangul:'임의청가', desc:'누구에게나 마음대로 노래 청하기' },
-  { hanja:'月鏡一曲', hangul:'월경일곡', desc:'월경 한 곡조 부르기' },
-  { hanja:'空詠詩過', hangul:'공영시과', desc:'시 한 수 읊기' },
-  { hanja:'兩盞則放', hangul:'양잔즉방', desc:'술 두 잔이 있으면 쏟아버리기' },
-  { hanja:'醜物莫放', hangul:'추물막방', desc:'더러운 물건을 버리지 않기' },
-  { hanja:'自唱怪來晚', hangul:'자창괴래만', desc:"스스로 '괴래만'이라는 노래 부르기" },
+  { hanja:'曲臂則盡', hangul:'곡비즉진', read:'Gokbi-jeukjin', desc:'팔을 구부려 다 마시기', descEn:'Bend your arm and drink it all' },
+  { hanja:'弄面孔過', hangul:'농면공과', read:'Nongmyeon-gonggwa', desc:'얼굴 간지럼을 태워도 꼼짝 않기', descEn:'Stay still while your face is tickled' },
+  { hanja:'任意請歌', hangul:'임의청가', read:'Imui-cheongga', desc:'누구에게나 마음대로 노래 청하기', descEn:'Ask anyone you like to sing' },
+  { hanja:'月鏡一曲', hangul:'월경일곡', read:'Wolgyeong-ilgok', desc:'월경 한 곡조 부르기', descEn:"Sing a verse of 'Wolgyeong'" },
+  { hanja:'空詠詩過', hangul:'공영시과', read:'Gongyeong-sigwa', desc:'시 한 수 읊기', descEn:'Recite a poem' },
+  { hanja:'兩盞則放', hangul:'양잔즉방', read:'Yangjan-jeukbang', desc:'술 두 잔이 있으면 쏟아버리기', descEn:'If two cups are left, pour them out' },
+  { hanja:'醜物莫放', hangul:'추물막방', read:'Chumul-makbang', desc:'더러운 물건을 버리지 않기', descEn:"Don't toss away the dirty thing" },
+  { hanja:'自唱怪來晚', hangul:'자창괴래만', read:'Jachang-goeraeman', desc:"스스로 '괴래만'이라는 노래 부르기", descEn:"Sing the song 'Goeraeman' yourself" },
 ];
 
 // 면적을 거의 같게: 꼭짓점 (0,±B,±C). 정규(C=2B) 대신 사각·육각 면적이 같아지는 비율 사용
@@ -322,8 +381,8 @@ function makeTexture(rule, hanjaColor='#d8463a', hangulColor='#e7c997', glow=fal
   if(full){
     // ===== 기본 주령구: 한자 + 한글 + 설명(박스), 면 안에 자동 맞춤 =====
     const chars=[...(rule.hanja||'')];
-    const hg=rule.hangul||'';
-    const ds='';   // 설명은 면에 표시하지 않음 (한자+한글만)
+    const hg=readingOf(rule);
+    const ds='';   // 설명은 면에 표시하지 않음 (한자+읽기만)
     const HF=42, GF=19, DF=15, GAP=7, PADX=10, PADY=6;
     const N=chars.length;
     const rows=N?Math.max(1,Math.round(Math.sqrt(N))):0;
@@ -393,7 +452,7 @@ function makeTexture(rule, hanjaColor='#d8463a', hangulColor='#e7c997', glow=fal
     }
   } else {
     // ===== 수정된 면: 설명만 표시 (최대 3줄), 면 안에 자동 맞춤 =====
-    const text=(rule.desc||'').trim();
+    const text=getDesc(rule).trim();
     if(text){
       const BF=30;
       g.font=`700 ${BF}px "Noto Sans KR", sans-serif`;
@@ -532,7 +591,7 @@ const LS_PLAYERS='jurenggu.players', LS_RULES='jurenggu.rules';
 function saveRules(){
   try{
     localStorage.setItem(LS_RULES, JSON.stringify(
-      faces.map(f=>({ hanja:f.rule.hanja, hangul:f.rule.hangul, desc:f.rule.desc, edited:f.edited }))
+      faces.map(f=>({ hanja:f.rule.hanja, hangul:f.rule.hangul, read:f.rule.read, desc:f.rule.desc, descEn:f.rule.descEn, edited:f.edited }))
     ));
   }catch(e){}
 }
@@ -544,7 +603,9 @@ function loadRules(){
       const r=arr[i]; if(!r) return;
       if(typeof r.hanja==='string') f.rule.hanja=r.hanja;
       if(typeof r.hangul==='string') f.rule.hangul=r.hangul;
+      if(typeof r.read==='string') f.rule.read=r.read;
       if(typeof r.desc==='string') f.rule.desc=r.desc;
+      if(typeof r.descEn==='string') f.rule.descEn=r.descEn;
       f.edited=!!r.edited;
       refreshFace(i);
     });
@@ -589,7 +650,7 @@ function loadPlayers(){
 function addPlayer(){
   if(players.length>=MAX_PLAYERS) return;
   let name=nameInput.value.trim();
-  if(!name) name='참가자 '+(players.length+1);
+  if(!name) name=S().defaultPlayer(players.length+1);
   players.push(name);
   nameInput.value='';
   renderPlayers();
@@ -599,10 +660,10 @@ function addPlayer(){
 function removePlayer(i){ players.splice(i,1); renderPlayers(); savePlayers(); }
 function renderPlayers(){
   playerList.innerHTML=players.map((p,i)=>
-    `<span class="chip">${esc(p)}<button data-i="${i}" title="삭제">×</button></span>`).join('');
+    `<span class="chip">${esc(p)}<button data-i="${i}" title="${S().deleteTitle}">×</button></span>`).join('');
   playerList.querySelectorAll('button').forEach(b=>
     b.addEventListener('click',()=>removePlayer(+b.dataset.i)));
-  countEl.textContent=players.length+' / '+MAX_PLAYERS+'명';
+  countEl.textContent=S().count(players.length);
   addBtn.disabled=players.length>=MAX_PLAYERS;
   nameInput.disabled=players.length>=MAX_PLAYERS;
   startBtn.disabled=players.length===0;
@@ -615,7 +676,7 @@ function startGame(){
   updateTurn();
 }
 function updateTurn(){
-  turnEl.innerHTML=`${curIdx+1} / ${players.length} · <b>${esc(players[curIdx])}</b> 님 차례`;
+  turnEl.innerHTML=S().turn(curIdx+1, players.length, esc(players[curIdx]));
 }
 function nextTurn(){
   curIdx=(curIdx+1)%players.length;
@@ -645,10 +706,11 @@ function scheduleRefresh(i){
   refreshTimers[i]=setTimeout(()=>refreshFace(i),250);
 }
 function renderEditor(){
+  const st=S();
   ruleRows.innerHTML=faces.map((f,i)=>`
     <div class="rule-row">
-      <span class="rule-type ${f.type==='사각형'?'sq':'hx'}" title="${f.type}">${f.type==='사각형'?'四':'六'}</span>
-      <input class="r-desc" data-i="${i}" data-k="desc" maxlength="40" value="${esc(f.rule.desc)}" placeholder="벌칙 설명" />
+      <span class="rule-type ${f.type==='사각형'?'sq':'hx'}" title="${f.type==='사각형'?st.square:st.hexagon}">${f.type==='사각형'?'四':'六'}</span>
+      <input class="r-desc" data-i="${i}" data-k="${descKey()}" maxlength="40" value="${esc(getDesc(f.rule))}" placeholder="${st.forfeitPlaceholder}" />
     </div>`).join('');
   ruleRows.querySelectorAll('input').forEach(inp=>{
     inp.addEventListener('input',()=>{
@@ -663,15 +725,17 @@ function renderEditor(){
 editBtn.addEventListener('click',()=>{
   const show=editor.hidden;
   editor.hidden=!show;
-  editBtn.textContent=show?'수정 닫기':'벌칙 수정';
+  editBtn.textContent=show?S().closeEditor:S().editForfeits;
   if(show) renderEditor();
 });
 resetRules.addEventListener('click',()=>{
   faces.forEach((f,i)=>{
     f.rule.hanja=DEFAULT_RULES[i].hanja;    // 기본 주령구 내용으로 완전 복원
     f.rule.hangul=DEFAULT_RULES[i].hangul;
+    f.rule.read=DEFAULT_RULES[i].read;
     f.rule.desc=DEFAULT_RULES[i].desc;
-    f.edited=false;                         // 면=한자+한글, 결과창=한자+한글+기본 벌칙
+    f.rule.descEn=DEFAULT_RULES[i].descEn;
+    f.edited=false;                         // 면=한자+읽기, 결과창=한자+읽기+기본 벌칙
     refreshFace(i);
   });
   saveRules();
@@ -680,7 +744,7 @@ resetRules.addEventListener('click',()=>{
 document.getElementById('confirmEdit').addEventListener('click',()=>{
   faces.forEach((f,i)=>refreshFace(i)); // 보류 중인 변경 즉시 반영
   editor.hidden=true;
-  editBtn.textContent='벌칙 수정';
+  editBtn.textContent=S().editForfeits;
 });
 
 // ---- 선택된 면 형광 발광 ----
@@ -746,15 +810,17 @@ function updateRoll(now){
 }
 
 function showResult(f, player){
+  const st=S();
   const body = f.edited
-    ? `<div class="hanja penalty">${esc(f.rule.desc)}</div>`
-    : `<div class="hanja">${f.rule.hanja} <span class="read">(${f.rule.hangul})</span></div>
-       <div class="desc"><b>벌칙</b> &nbsp;${esc(f.rule.desc)}</div>`;
+    ? `<div class="hanja penalty">${esc(getDesc(f.rule))}</div>`
+    : `<div class="hanja">${f.rule.hanja} <span class="read">(${esc(readingOf(f.rule))})</span></div>
+       <div class="desc"><b>${st.forfeitLabel}</b> &nbsp;${esc(getDesc(f.rule))}</div>`;
   resultEl.innerHTML=`
-    ${player?`<div class="who">🍶 ${esc(player)} 님</div>`:''}
+    ${player?`<div class="who">${st.who(esc(player))}</div>`:''}
     ${body}`;
   void resultEl.offsetWidth;
   resultEl.classList.add('show');
+  lastShown={f, player};
 }
 
 rollBtn.addEventListener('click', startRoll);
@@ -776,6 +842,44 @@ function animate(now){
   controls.update();
   renderer.render(scene,camera);
 }
+
+// ---- 언어 적용 / 전환 ----
+const langBtn=document.getElementById('langBtn');
+function applyLang(){
+  const st=S();
+  try{ localStorage.setItem('jurenggu.lang', LANG); }catch(e){}
+  document.documentElement.lang=LANG;
+  document.querySelector('header h1').innerHTML=st.title;
+  document.querySelector('header p').textContent=st.subtitle;
+  nameInput.placeholder=st.namePlaceholder;
+  addBtn.textContent=st.add;
+  startBtn.textContent=st.startGame;
+  document.querySelector('#editor .editor-head span').textContent=st.editorHead;
+  resetRules.textContent=st.restoreDefaults;
+  document.getElementById('confirmEdit').textContent=st.done;
+  document.getElementById('hint').textContent=st.hint;
+  rollBtn.textContent=st.roll;
+  resetBtn.textContent=st.resetAll;
+  document.querySelector('footer').innerHTML=st.footer;
+  langBtn.textContent=st.langBtn;
+  editBtn.textContent=editor.hidden?st.editForfeits:st.closeEditor;
+  // 동적 요소
+  renderPlayers();
+  if(gameStarted) updateTurn();
+  if(!editor.hidden) renderEditor();
+  if(resultEl.classList.contains('show') && lastShown){
+    showResult(lastShown.f, lastShown.player);
+  } else {
+    resultEl.innerHTML=`<div class="placeholder">${st.resultPlaceholder}</div>`;
+  }
+  // 면 텍스처(읽기/설명 언어) 다시 그리기
+  faces.forEach((f,i)=>refreshFace(i));
+}
+langBtn.addEventListener('click',()=>{
+  LANG = LANG==='ko' ? 'en' : 'ko';
+  applyLang();
+});
+applyLang();
 
 // 웹폰트 로드 완료 후 텍스처를 다시 그려 한자 글꼴 보장
 if(document.fonts && document.fonts.ready){

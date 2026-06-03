@@ -685,6 +685,7 @@ function nextTurn(){
 function resetGame(){
   gameStarted=false;
   setupEl.hidden=false; controlsEl.hidden=true; turnEl.hidden=true;
+  resultEl.classList.remove('show');
   unlightFaces();
   renderPlayers();
 }

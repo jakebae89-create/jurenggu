@@ -247,10 +247,15 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
 
 // ================= 다국어(i18n) =================
-// 기기 언어가 한국어면 ko, 아니면 en. 저장된 선택이 있으면 우선.
+// 기기 언어가 한국어면 ko, 일본어면 ja, 아니면 en. 저장된 선택이 있으면 우선.
 const savedLang = (()=>{ try{ return localStorage.getItem('jurenggu.lang'); }catch(e){ return null; } })();
-let LANG = (savedLang==='ko'||savedLang==='en') ? savedLang
-         : ((navigator.language||'').toLowerCase().startsWith('ko') ? 'ko' : 'en');
+const detectLang = () => {
+  const l = (navigator.language||'').toLowerCase();
+  if(l.startsWith('ko')) return 'ko';
+  if(l.startsWith('ja')) return 'ja';
+  return 'en';
+};
+let LANG = (savedLang==='ko'||savedLang==='en'||savedLang==='ja') ? savedLang : detectLang();
 
 const STRINGS = {
   ko: {
@@ -281,39 +286,56 @@ const STRINGS = {
     roll: 'ROLL', resetAll: 'Reset forfeits & players',
     footer: '6 square faces · 8 hexagon faces = 14 &nbsp;|&nbsp; Each face: 1/14 chance',
     forfeitLabel: 'Forfeit', forfeitPlaceholder: 'Forfeit description',
-    square: 'Square', hexagon: 'Hexagon', deleteTitle: 'Delete', langBtn: '한국어',
+    square: 'Square', hexagon: 'Hexagon', deleteTitle: 'Delete', langBtn: '日本語',
     defaultPlayer: n => 'Player '+n,
     count: n => n+' / 14',
     turn: (i,n,name) => `${i} / ${n} · <b>${name}</b>'s turn`,
     who: name => `🍶 ${name}`,
   },
+  ja: {
+    title: 'チュリョング <span class="han">(酒令具)</span> サイコロ',
+    subtitle: '新羅の東宮と月池から出土した14面体の罰ゲームサイコロ・出た面の罰ゲームを実行しましょう',
+    namePlaceholder: '参加者の名前を入力（最大14人）',
+    add: '追加', editForfeits: '罰ゲーム編集', closeEditor: '編集を閉じる', startGame: 'ゲーム開始',
+    editorHead: '罰ゲーム編集 — 説明', restoreDefaults: '初期値に戻す', done: '完了',
+    hint: 'ドラッグで回転・ホイールで拡大／縮小',
+    resultPlaceholder: 'サイコロを振ると、ここに罰ゲームが表示されます。',
+    roll: 'ふ る', resetAll: '罰ゲーム内容と参加者をリセット',
+    footer: '正方形6面・正六角形8面 = 14面 &nbsp;|&nbsp; 各面が出る確率 1/14',
+    forfeitLabel: '罰ゲーム', forfeitPlaceholder: '罰ゲームの説明',
+    square: '四角形', hexagon: '六角形', deleteTitle: '削除', langBtn: '한국어',
+    defaultPlayer: n => '参加者 '+n,
+    count: n => n+' / 14人',
+    turn: (i,n,name) => `${i} / ${n} · <b>${name}</b> さんの番`,
+    who: name => `🍶 ${name} さん`,
+  },
 };
 const S = () => STRINGS[LANG];
-// 면/결과에 표시할 읽기: 한국어=한글, 영어=로마자(read)
-const readingOf = rule => (LANG==='en' ? (rule.read || rule.hangul) : rule.hangul) || '';
+// 면/결과에 표시할 읽기: 한국어=한글, 영어/일본어=로마자(read)
+const readingOf = rule => ((LANG==='en'||LANG==='ja') ? (rule.read || rule.hangul) : rule.hangul) || '';
 // 현재 언어의 벌칙 설명 키/값
-const descKey = () => LANG==='en' ? 'descEn' : 'desc';
+const descKey = () => LANG==='en' ? 'descEn' : (LANG==='ja' ? 'descJa' : 'desc');
 const getDesc = rule => { const k=descKey(); return (typeof rule[k]==='string') ? rule[k] : (rule.desc||''); };
 let lastShown = null; // 언어 전환 시 결과창 다시 그리기용
 
 // ---- 14가지 벌칙 데이터 (한자 / 한글 / 로마자 / 한국어 설명 / 영어 설명) ----
 const SQUARE_RULES = [
-  { hanja:'禁聲作舞', hangul:'금성작무', read:'Geumseong-jangmu', desc:'소리 없이 춤추기', descEn:'Dance without making a sound' },
-  { hanja:'衆人打鼻', hangul:'중인타비', read:'Jungin-tabi', desc:'여러 사람이 코를 두드리기', descEn:'Let everyone tap your nose' },
-  { hanja:'飮盡大笑', hangul:'음진대소', read:'Eumjin-daeso', desc:'술을 다 마시고 크게 웃기', descEn:'Drink it all and laugh out loud' },
-  { hanja:'三盞一去', hangul:'삼잔일거', read:'Samjan-ilgeo', desc:'한 번에 술 석 잔 마시기', descEn:'Down three cups in one go' },
-  { hanja:'有犯空過', hangul:'유범공과', read:'Yubeom-gonggwa', desc:'덤벼드는 사람이 있어도 참고 가만히 있기', descEn:'Stay still even if someone provokes you' },
-  { hanja:'自唱自飮', hangul:'자창자음', read:'Jachang-jaeum', desc:'스스로 노래 부르고 마시기', descEn:'Sing a song yourself, then drink' },
+  { hanja:'禁聲作舞', hangul:'금성작무', read:'Geumseong-jangmu', desc:'소리 없이 춤추기', descEn:'Dance without making a sound', descJa:'声を出さずに踊る' },
+  { hanja:'衆人打鼻', hangul:'중인타비', read:'Jungin-tabi', desc:'여러 사람이 코를 두드리기', descEn:'Let everyone tap your nose', descJa:'みんなに鼻を叩いてもらう' },
+  { hanja:'飮盡大笑', hangul:'음진대소', read:'Eumjin-daeso', desc:'술을 다 마시고 크게 웃기', descEn:'Drink it all and laugh out loud', descJa:'お酒を飲み干して大笑いする' },
+  { hanja:'三盞一去', hangul:'삼잔일거', read:'Samjan-ilgeo', desc:'한 번에 술 석 잔 마시기', descEn:'Down three cups in one go', descJa:'お酒を一気に三杯飲む' },
+  { hanja:'有犯空過', hangul:'유범공과', read:'Yubeom-gonggwa', desc:'덤벼드는 사람이 있어도 참고 가만히 있기', descEn:'Stay still even if someone provokes you', descJa:'からかわれてもじっと我慢する' },
+  { hanja:'自唱自飮', hangul:'자창자음', read:'Jachang-jaeum', desc:'스스로 노래 부르고 마시기', descEn:'Sing a song yourself, then drink', descJa:'自分で歌って、そのまま飲む' },
 ];
 const HEX_RULES = [
-  { hanja:'曲臂則盡', hangul:'곡비즉진', read:'Gokbi-jeukjin', desc:'팔을 구부려 다 마시기', descEn:'Bend your arm and drink it all' },
-  { hanja:'弄面孔過', hangul:'농면공과', read:'Nongmyeon-gonggwa', desc:'얼굴 간지럼을 태워도 꼼짝 않기', descEn:'Stay still while your face is tickled' },
-  { hanja:'任意請歌', hangul:'임의청가', read:'Imui-cheongga', desc:'누구에게나 마음대로 노래 청하기', descEn:'Ask anyone you like to sing' },
-  { hanja:'月鏡一曲', hangul:'월경일곡', read:'Wolgyeong-ilgok', desc:'월경 한 곡조 부르기', descEn:"Sing a verse of 'Wolgyeong'" },
-  { hanja:'空詠詩過', hangul:'공영시과', read:'Gongyeong-sigwa', desc:'시 한 수 읊기', descEn:'Recite a poem' },
-  { hanja:'兩盞則放', hangul:'양잔즉방', read:'Yangjan-jeukbang', desc:'술 두 잔이 있으면 쏟아버리기', descEn:'If two cups are left, pour them out' },
-  { hanja:'醜物莫放', hangul:'추물막방', read:'Chumul-makbang', desc:'더러운 물건을 버리지 않기', descEn:"Don't toss away the dirty thing" },
-  { hanja:'自唱怪來晚', hangul:'자창괴래만', read:'Jachang-goeraeman', desc:"스스로 '괴래만'이라는 노래 부르기", descEn:"Sing the song 'Goeraeman' yourself" },
+  { hanja:'曲臂則盡', hangul:'곡비즉진', read:'Gokbi-jeukjin', desc:'팔을 구부려 다 마시기', descEn:'Bend your arm and drink it all', descJa:'腕を曲げて飲み干す' },
+  { hanja:'弄面孔過', hangul:'농면공과', read:'Nongmyeon-gonggwa', desc:'얼굴 간지럼을 태워도 꼼짝 않기', descEn:'Stay still while your face is tickled', descJa:'顔をくすぐられても動かない' },
+  { hanja:'任意請歌', hangul:'임의청가', read:'Imui-cheongga', desc:'누구에게나 마음대로 노래 청하기', descEn:'Ask anyone you like to sing', descJa:'誰でも好きな人に歌をリクエストする' },
+  { hanja:'月鏡一曲', hangul:'월경일곡', read:'Wolgyeong-ilgok', desc:'월경 한 곡조 부르기', descEn:"Sing a verse of 'Wolgyeong'", descJa:'「月鏡」を一曲歌う' },
+  { hanja:'空詠詩過', hangul:'공영시과', read:'Gongyeong-sigwa', desc:'시 한 수 읊기', descEn:'Recite a poem', descJa:'詩を一首詠む' },
+  { hanja:'兩盞則放', hangul:'양잔즉방', read:'Yangjan-jeukbang', desc:'술 두 잔이 있으면 쏟아버리기', descEn:'If two cups are left, pour them out', descJa:'お酒が二杯あれば注ぎ捨てる' },
+  { hanja:'醜物莫放', hangul:'추물막방', read:'Chumul-makbang', desc:'더러운 물건을 버리지 않기', descEn:"Don't toss away the dirty thing", descJa:'汚いものを捨てずに持っておく' },
+  { hanja:'自唱怪來晚', hangul:'자창괴래만', read:'Jachang-goeraeman', desc:"스스로 '괴래만'이라는 노래 부르기", descEn:"Sing the song 'Goeraeman' yourself", descJa:'「怪来晩」という歌を自分で歌う' },
 ];
 
 // 면적을 거의 같게: 꼭짓점 (0,±B,±C). 정규(C=2B) 대신 사각·육각 면적이 같아지는 비율 사용
@@ -591,7 +613,7 @@ const LS_PLAYERS='jurenggu.players', LS_RULES='jurenggu.rules';
 function saveRules(){
   try{
     localStorage.setItem(LS_RULES, JSON.stringify(
-      faces.map(f=>({ hanja:f.rule.hanja, hangul:f.rule.hangul, read:f.rule.read, desc:f.rule.desc, descEn:f.rule.descEn, edited:f.edited }))
+      faces.map(f=>({ hanja:f.rule.hanja, hangul:f.rule.hangul, read:f.rule.read, desc:f.rule.desc, descEn:f.rule.descEn, descJa:f.rule.descJa, edited:f.edited }))
     ));
   }catch(e){}
 }
@@ -606,6 +628,7 @@ function loadRules(){
       if(typeof r.read==='string') f.rule.read=r.read;
       if(typeof r.desc==='string') f.rule.desc=r.desc;
       if(typeof r.descEn==='string') f.rule.descEn=r.descEn;
+      if(typeof r.descJa==='string') f.rule.descJa=r.descJa;
       f.edited=!!r.edited;
       refreshFace(i);
     });
@@ -736,6 +759,7 @@ resetRules.addEventListener('click',()=>{
     f.rule.read=DEFAULT_RULES[i].read;
     f.rule.desc=DEFAULT_RULES[i].desc;
     f.rule.descEn=DEFAULT_RULES[i].descEn;
+    f.rule.descJa=DEFAULT_RULES[i].descJa;
     f.edited=false;                         // 면=한자+읽기, 결과창=한자+읽기+기본 벌칙
     refreshFace(i);
   });
@@ -877,7 +901,7 @@ function applyLang(){
   faces.forEach((f,i)=>refreshFace(i));
 }
 langBtn.addEventListener('click',()=>{
-  LANG = LANG==='ko' ? 'en' : 'ko';
+  LANG = LANG==='ko' ? 'en' : (LANG==='en' ? 'ja' : 'ko');
   applyLang();
 });
 applyLang();

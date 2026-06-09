@@ -181,6 +181,10 @@
   /* 짧은 화면: 벌칙 수정 목록 높이를 줄여 '완료' 버튼이 화면 안에 보이게 */
   @media (max-height:700px){ #ruleRows{ max-height:220px; } }
   @media (max-height:600px){ #ruleRows{ max-height:160px; } }
+  /* 편집기 열린 동안엔 참가자 입력/칩을 숨겨 '완료' 버튼이 항상 화면 안에 */
+  #setup.editing .setup-row, #setup.editing #playerList{ display:none; }
+  /* 초소형 폭(구형 소형폰): 제목 추가 축소로 한 줄 유지 */
+  @media (max-width:340px){ header h1{ font-size:18px; letter-spacing:1px; } }
 
   #langBtn{
     position:fixed; top:8px; right:8px; z-index:30;
@@ -707,6 +711,8 @@ function renderPlayers(){
 }
 function startGame(){
   if(players.length===0) return;
+  // 편집기를 연 채 시작하면 'editing' 상태가 남아 리셋 후 참가자 입력이 숨겨지므로 정리
+  editor.hidden=true; setupEl.classList.remove('editing'); editBtn.textContent=S().editForfeits;
   gameStarted=true; curIdx=0;
   setupEl.hidden=true; controlsEl.hidden=false; turnEl.hidden=false;
   resultEl.classList.remove('show');
@@ -763,6 +769,7 @@ function renderEditor(){
 editBtn.addEventListener('click',()=>{
   const show=editor.hidden;
   editor.hidden=!show;
+  setupEl.classList.toggle('editing', show); // 편집 중엔 참가자 입력/칩 숨겨 편집기에 화면 양보
   editBtn.textContent=show?S().closeEditor:S().editForfeits;
   if(show) renderEditor();
 });
@@ -783,6 +790,7 @@ resetRules.addEventListener('click',()=>{
 document.getElementById('confirmEdit').addEventListener('click',()=>{
   faces.forEach((f,i)=>refreshFace(i)); // 보류 중인 변경 즉시 반영
   editor.hidden=true;
+  setupEl.classList.remove('editing');
   editBtn.textContent=S().editForfeits;
 });
 

@@ -1,5 +1,5 @@
 // 주령구 PWA 서비스 워커
-const CACHE = 'jurenggu-v4';
+const CACHE = 'jurenggu-v5';
 
 // 앱 실행에 필요한 로컬 자산 (오프라인 대비 미리 저장)
 const PRECACHE = [

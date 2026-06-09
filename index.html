@@ -36,10 +36,10 @@
     display:flex; flex-direction:column; align-items:center;
     overflow-x:hidden;
   }
-  header{ text-align:center; padding:10px 14px 2px; flex:0 0 auto; }
+  header{ text-align:center; padding:40px 14px 2px; flex:0 0 auto; }
   header h1{
     font-family:"Noto Serif KR",serif; font-weight:900;
-    font-size:clamp(22px,4.6vw,40px); letter-spacing:6px;
+    font-size:clamp(20px,4.4vw,38px); letter-spacing:3px;
     background:linear-gradient(95deg,#ffe08a 0%,#ff9d5c 38%,#ff5fa2 72%,#b97bff 100%);
     -webkit-background-clip:text; background-clip:text;
     -webkit-text-fill-color:transparent; color:transparent;
@@ -73,7 +73,7 @@
 
   #result{
     position:absolute; left:50%; bottom:10px; z-index:5;
-    width:min(92%,520px); max-height:52%; overflow:auto; pointer-events:none;
+    width:min(92%,520px); max-height:80%; overflow:auto; pointer-events:none;
     background:linear-gradient(180deg,#f7ecd6,#ecdcbd);
     color:var(--ink); border-radius:14px; padding:14px 18px;
     box-shadow:0 14px 40px rgba(0,0,0,.5), 0 0 34px rgba(255,95,162,.28); border:1px solid #ffd76a;
@@ -171,6 +171,16 @@
 
   footer{ color:#6f6150; font-size:11px; padding:2px 0 8px; text-align:center; line-height:1.5; flex:0 0 auto;}
   @media (max-height:620px){ footer{ display:none; } header p{ display:none; } }
+  /* 작은 화면: 결과창이 잘리지 않도록 한자/여백 압축 */
+  @media (max-width:400px){
+    #result{ padding:12px 14px; }
+    #result .hanja{ font-size:30px; letter-spacing:3px; }
+    #result .hanja .read{ font-size:.5em; }
+    #result .desc{ margin-top:10px; font-size:16px; }
+  }
+  /* 짧은 화면: 벌칙 수정 목록 높이를 줄여 '완료' 버튼이 화면 안에 보이게 */
+  @media (max-height:700px){ #ruleRows{ max-height:220px; } }
+  @media (max-height:600px){ #ruleRows{ max-height:160px; } }
 
   #langBtn{
     position:fixed; top:8px; right:8px; z-index:30;
@@ -670,10 +680,14 @@ function loadPlayers(){
   }catch(e){}
 }
 
+// 표시용 이름: 빈 문자열(기본 참가자)은 현재 언어의 기본 이름으로 변환
+function playerName(i){
+  const p=players[i];
+  return (p==null||p==='') ? S().defaultPlayer(i+1) : p;
+}
 function addPlayer(){
   if(players.length>=MAX_PLAYERS) return;
-  let name=nameInput.value.trim();
-  if(!name) name=S().defaultPlayer(players.length+1);
+  let name=nameInput.value.trim();   // '' = 기본 이름(언어 따라 자동 표시)
   players.push(name);
   nameInput.value='';
   renderPlayers();
@@ -683,7 +697,7 @@ function addPlayer(){
 function removePlayer(i){ players.splice(i,1); renderPlayers(); savePlayers(); }
 function renderPlayers(){
   playerList.innerHTML=players.map((p,i)=>
-    `<span class="chip">${esc(p)}<button data-i="${i}" title="${S().deleteTitle}">×</button></span>`).join('');
+    `<span class="chip">${esc(playerName(i))}<button data-i="${i}" title="${S().deleteTitle}">×</button></span>`).join('');
   playerList.querySelectorAll('button').forEach(b=>
     b.addEventListener('click',()=>removePlayer(+b.dataset.i)));
   countEl.textContent=S().count(players.length);
@@ -699,7 +713,7 @@ function startGame(){
   updateTurn();
 }
 function updateTurn(){
-  turnEl.innerHTML=S().turn(curIdx+1, players.length, esc(players[curIdx]));
+  turnEl.innerHTML=S().turn(curIdx+1, players.length, esc(playerName(curIdx)));
 }
 function nextTurn(){
   curIdx=(curIdx+1)%players.length;
@@ -796,7 +810,7 @@ function lightFace(idx){
 function startRoll(){
   if(roll.active || !gameStarted) return;
   roll.active=true; hasRolled=true;
-  roll.player=players[curIdx];
+  roll.playerIdx=curIdx;
   unlightFaces();
   rollBtn.disabled=true;
   resultEl.classList.remove('show');
@@ -829,23 +843,21 @@ function updateRoll(now){
     roll.active=false;
     rollBtn.disabled=false;
     lightFace(roll.idx);
-    showResult(faces[roll.idx], roll.player);
+    showResult(faces[roll.idx], roll.playerIdx);
     nextTurn();
   }
 }
 
-function showResult(f, player){
+function showResult(f, playerIdx){
   const st=S();
   const body = f.edited
     ? `<div class="hanja penalty">${esc(getDesc(f.rule))}</div>`
     : `<div class="hanja">${f.rule.hanja} <span class="read">(${esc(readingOf(f.rule))})</span></div>
        <div class="desc"><b>${st.forfeitLabel}</b> &nbsp;${esc(getDesc(f.rule))}</div>`;
-  resultEl.innerHTML=`
-    ${player?`<div class="who">${st.who(esc(player))}</div>`:''}
-    ${body}`;
+  resultEl.innerHTML=body;
   void resultEl.offsetWidth;
   resultEl.classList.add('show');
-  lastShown={f, player};
+  lastShown={f, playerIdx};
 }
 
 rollBtn.addEventListener('click', startRoll);
@@ -893,7 +905,7 @@ function applyLang(){
   if(gameStarted) updateTurn();
   if(!editor.hidden) renderEditor();
   if(resultEl.classList.contains('show') && lastShown){
-    showResult(lastShown.f, lastShown.player);
+    showResult(lastShown.f, lastShown.playerIdx);
   } else {
     resultEl.innerHTML=`<div class="placeholder">${st.resultPlaceholder}</div>`;
   }

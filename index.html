@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>주령구(酒令具) 주사위</title>
+<title>Korean Folk Dice: Juryeonggu</title>
 <meta name="description" content="신라 동궁과 월지에서 출토된 14면체 벌칙 주사위 주령구. 친구들과 굴려서 나온 벌칙을 수행하는 전통 술자리 놀이." />
 <link rel="manifest" href="./manifest.webmanifest" />
 <meta name="theme-color" content="#150a26" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="주령구 주사위" />
+<meta name="apple-mobile-web-app-title" content="Korean Folk Dice: Juryeonggu" />
 <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png" />
 <link rel="apple-touch-icon" href="./icons/icon-192.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -46,6 +46,11 @@
     filter:drop-shadow(0 2px 10px rgba(255,90,160,.4));
   }
   header h1 .han{ -webkit-text-fill-color:#ffd76a; color:#ffd76a; font-size:.7em; letter-spacing:2px; }
+  header h1 .native{
+    display:block; margin-top:6px;
+    font-size:.5em; letter-spacing:2px; font-weight:700;
+    -webkit-text-fill-color:#c9a86a; color:#c9a86a; filter:none;
+  }
   header p{ margin-top:4px; color:#c8b89a; font-size:12px; letter-spacing:.5px; opacity:.85; }
 
   #stage{ width:100%; max-width:720px; flex:1 1 auto; min-height:0; position:relative; touch-action:none; }
@@ -198,7 +203,7 @@
 <body>
   <button id="langBtn" type="button" aria-label="Language"></button>
   <header>
-    <h1>주령구<span class="han">(酒令具)</span> 주사위</h1>
+    <h1>Korean Folk Dice: Juryeonggu<span class="native">주령구<span class="han">(酒令具)</span> 주사위</span></h1>
     <p>신라 동궁과 월지에서 출토된 14면체 벌칙 주사위 · 굴려서 나온 면의 벌칙을 수행하세요</p>
   </header>
 
@@ -273,7 +278,7 @@ let LANG = (savedLang==='ko'||savedLang==='en'||savedLang==='ja') ? savedLang : 
 
 const STRINGS = {
   ko: {
-    title: '주령구<span class="han">(酒令具)</span> 주사위',
+    title: 'Korean Folk Dice: Juryeonggu<span class="native">주령구<span class="han">(酒令具)</span> 주사위</span>',
     subtitle: '신라 동궁과 월지에서 출토된 14면체 벌칙 주사위 · 굴려서 나온 면의 벌칙을 수행하세요',
     namePlaceholder: '참가자 이름 입력 (최대 14명)',
     add: '추가', editForfeits: '벌칙 수정', closeEditor: '수정 닫기', startGame: '게임 시작',
@@ -290,7 +295,7 @@ const STRINGS = {
     who: name => `🍶 ${name} 님`,
   },
   en: {
-    title: 'Juryeonggu <span class="han">(酒令具)</span> Dice',
+    title: 'Korean Folk Dice: Juryeonggu<span class="native">Juryeonggu <span class="han">(酒令具)</span> Dice</span>',
     subtitle: "A 14-sided forfeit die from Silla's Donggung Palace & Wolji Pond · Roll it and do the forfeit shown",
     namePlaceholder: 'Enter player name (up to 14)',
     add: 'Add', editForfeits: 'Edit forfeits', closeEditor: 'Close editor', startGame: 'Start game',
@@ -307,7 +312,7 @@ const STRINGS = {
     who: name => `🍶 ${name}`,
   },
   ja: {
-    title: 'チュリョング <span class="han">(酒令具)</span> サイコロ',
+    title: 'Korean Folk Dice: Juryeonggu<span class="native">チュリョング <span class="han">(酒令具)</span> サイコロ</span>',
     subtitle: '新羅の東宮と月池から出土した14面体の罰ゲームサイコロ・出た面の罰ゲームを実行しましょう',
     namePlaceholder: '参加者の名前を入力（最大14人）',
     add: '追加', editForfeits: '罰ゲーム編集', closeEditor: '編集を閉じる', startGame: 'ゲーム開始',

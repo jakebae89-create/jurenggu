@@ -36,6 +36,28 @@
     display:flex; flex-direction:column; align-items:center;
     overflow-x:hidden;
   }
+  /* 테마별 페이지 배경 (classic은 위 기본 배경 사용) */
+  body[data-theme="hanji"]{
+    background:
+      radial-gradient(900px 520px at 15% 8%, rgba(210,150,60,.30), transparent 60%),
+      radial-gradient(900px 520px at 85% 12%, rgba(180,120,50,.26), transparent 60%),
+      linear-gradient(160deg,#3a2717 0%, #241a12 55%, #14100a 100%);
+    background-attachment:fixed;
+  }
+  body[data-theme="jade"]{
+    background:
+      radial-gradient(900px 520px at 15% 8%, rgba(60,180,150,.28), transparent 60%),
+      radial-gradient(900px 520px at 85% 12%, rgba(40,140,170,.26), transparent 60%),
+      linear-gradient(160deg,#123a30 0%, #0b241d 55%, #061310 100%);
+    background-attachment:fixed;
+  }
+  body[data-theme="neon"]{
+    background:
+      radial-gradient(900px 520px at 15% 8%, rgba(57,255,20,.20), transparent 60%),
+      radial-gradient(900px 520px at 85% 12%, rgba(20,200,120,.18), transparent 62%),
+      linear-gradient(160deg,#0d1a10 0%, #08120b 55%, #030805 100%);
+    background-attachment:fixed;
+  }
   header{ text-align:center; padding:40px 14px 2px; flex:0 0 auto; }
   header h1{
     font-family:"Noto Serif KR",serif; font-weight:900;
@@ -1059,6 +1081,7 @@ langBtn.addEventListener('click',()=>{
 
 // ================= 설정 패널: 밝기 · 테마 · 전개도 =================
 let curThemeName = savedTheme;
+document.body.dataset.theme = curThemeName;   // 로드 시 저장된 테마 배경 적용
 
 // 설정 라벨/테마버튼 이름을 현재 언어로 (applyLang에서도 호출 — 함수 선언이라 호이스팅됨)
 function applySettingsI18n(){
@@ -1097,6 +1120,7 @@ function applyTheme(name){
   if(!THEMES[name]) name='classic';
   THEME=THEMES[name]; curThemeName=name;
   try{ localStorage.setItem('jurenggu.theme', name); }catch(_){}
+  document.body.dataset.theme=name;          // 페이지 배경 전환
   core.material.color.setHex(THEME.core);
   edges.material.color.setHex(THEME.edge);
   faces.forEach((f,i)=>{ f.mat.roughness=THEME.rough; f.mat.metalness=THEME.metal; refreshFace(i); });

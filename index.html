@@ -260,6 +260,13 @@
   }
   .craft-btns button:hover, .craft-btns a:hover{ border-color:var(--gold); background:#463024; }
   .craft-note{ margin:2px 0 0; font-size:11px; opacity:.6; line-height:1.4; }
+  #brightReadout.readout{ min-width:42px; text-align:right; font-size:13px; font-weight:700; color:var(--gold); opacity:1; }
+  .settings-foot{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:14px; border-top:1px solid #3a2b20; }
+  #setReset{
+    background:transparent; border:1px solid #5a4636; color:#c8b89a;
+    border-radius:8px; padding:7px 14px; font:inherit; font-size:13px; cursor:pointer;
+  }
+  #setReset:hover{ border-color:var(--gold); color:var(--gold); }
 </style>
 </head>
 <body>
@@ -279,8 +286,9 @@
         <h4 id="setBrightLbl">밝기</h4>
         <div class="bright-row">
           <span>🌑</span>
-          <input type="range" id="brightRange" min="0.6" max="2" step="0.05" value="1">
+          <input type="range" id="brightRange" min="0.5" max="2.2" step="0.05" value="1">
           <span>🌕</span>
+          <span id="brightReadout" class="readout">100%</span>
         </div>
       </section>
       <section>
@@ -294,6 +302,10 @@
           <a id="craftPdf" href="./juryeonggu_papercraft.pdf" download="juryeonggu_papercraft.pdf">PDF 내려받기</a>
         </div>
       </section>
+      <div class="settings-foot">
+        <button id="setReset" type="button">기본값 복원</button>
+        <span id="autoSaveNote" class="craft-note">변경 사항은 자동 저장됩니다</span>
+      </div>
     </div>
   </div>
   <header>
@@ -389,6 +401,7 @@ const STRINGS = {
     who: name => `🍶 ${name} 님`,
     settingsTitle:'설정', brightLbl:'밝기', themeLbl:'테마', craftLbl:'전개도 (종이공예)',
     craftPrint:'인쇄용 페이지 열기', craftPdf:'PDF 내려받기', settingsAria:'설정',
+    autoSave:'변경 사항은 자동 저장됩니다',
   },
   en: {
     title: 'Korean Folk Dice: Juryeonggu<span class="native">Juryeonggu <span class="han">(酒令具)</span> Dice</span>',
@@ -408,6 +421,7 @@ const STRINGS = {
     who: name => `🍶 ${name}`,
     settingsTitle:'Settings', brightLbl:'Brightness', themeLbl:'Theme', craftLbl:'Papercraft',
     craftPrint:'Open print page', craftPdf:'Download PDF', settingsAria:'Settings',
+    autoSave:'Changes are saved automatically',
   },
   ja: {
     title: 'Korean Folk Dice: Juryeonggu<span class="native">チュリョング <span class="han">(酒令具)</span> サイコロ</span>',
@@ -427,6 +441,7 @@ const STRINGS = {
     who: name => `🍶 ${name} さん`,
     settingsTitle:'設定', brightLbl:'明るさ', themeLbl:'テーマ', craftLbl:'展開図（ペーパークラフト）',
     craftPrint:'印刷ページを開く', craftPdf:'PDFダウンロード', settingsAria:'設定',
+    autoSave:'変更は自動的に保存されます',
   },
 };
 const S = () => STRINGS[LANG];
@@ -672,10 +687,6 @@ const scene=new THREE.Scene();
 const renderer=new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.outputColorSpace=THREE.SRGBColorSpace;
-// 밝기 조절: LinearToneMapping(노출=1이면 기존과 동일) → 노출값만 슬라이더로 조정
-renderer.toneMapping=THREE.LinearToneMapping;
-const savedBright=(()=>{ try{ const v=parseFloat(localStorage.getItem('jurenggu.bright')); return (v>=0.6&&v<=2)?v:1; }catch(e){ return 1; } })();
-renderer.toneMappingExposure=savedBright;
 stage.appendChild(renderer.domElement);
 
 const camera=new THREE.PerspectiveCamera(42,1,0.1,100);
@@ -686,7 +697,7 @@ controls.enableDamping=true; controls.dampingFactor=0.08;
 controls.enablePan=false; controls.minDistance=5; controls.maxDistance=14;
 controls.target.set(0,0,0);
 
-scene.add(new THREE.HemisphereLight(0xfff0d8,0x2a1c12,0.9));
+const hemi=new THREE.HemisphereLight(0xfff0d8,0x2a1c12,0.9); scene.add(hemi);
 const key=new THREE.DirectionalLight(0xffffff,1.25); key.position.set(5,8,6); scene.add(key);
 const fill=new THREE.DirectionalLight(0xffd9a0,0.5); fill.position.set(-6,-2,-4); scene.add(fill);
 const glowA=new THREE.PointLight(0xff3da6,0.85,40); glowA.position.set(-6,3,5); scene.add(glowA);
@@ -1056,6 +1067,7 @@ function applySettingsI18n(){
   set('setTitle', st.settingsTitle); set('setBrightLbl', st.brightLbl);
   set('setThemeLbl', st.themeLbl); set('setCraftLbl', st.craftLbl);
   set('craftPrint', st.craftPrint); set('craftPdf', st.craftPdf);
+  set('setReset', st.restoreDefaults); set('autoSaveNote', st.autoSave);
   const gb=document.getElementById('gearBtn'); if(gb) gb.setAttribute('aria-label', st.settingsAria);
   document.querySelectorAll('#themeBtns button').forEach(b=>{
     const t=THEMES[b.dataset.theme], lbl=b.querySelector('.lbl');
@@ -1063,14 +1075,22 @@ function applySettingsI18n(){
   });
 }
 
-// 밝기: LinearToneMapping 노출값만 조정 (0.6~2.0, 1=기존)
+// 밝기: 모든 조명 세기를 배율(0.5~2.2, 1=기존)로 실시간 조정
+const LIGHTS=[hemi,key,fill,glowA,glowB];
+const BASE_INT=LIGHTS.map(l=>l.intensity);
+function applyBrightness(v){ LIGHTS.forEach((l,i)=>l.intensity=BASE_INT[i]*v); }
+const savedBright=(()=>{ try{ const x=parseFloat(localStorage.getItem('jurenggu.bright')); return (x>=0.5&&x<=2.2)?x:1; }catch(e){ return 1; } })();
 const brightRange=document.getElementById('brightRange');
-brightRange.value=renderer.toneMappingExposure;
-brightRange.addEventListener('input',e=>{
-  const v=parseFloat(e.target.value);
-  renderer.toneMappingExposure=v;
-  try{ localStorage.setItem('jurenggu.bright', String(v)); }catch(_){}
-});
+const brightReadout=document.getElementById('brightReadout');
+function setBrightness(v, save){
+  v=Math.max(0.5,Math.min(2.2,v));
+  applyBrightness(v);
+  brightRange.value=v;
+  brightReadout.textContent=Math.round(v*100)+'%';
+  if(save){ try{ localStorage.setItem('jurenggu.bright', String(v)); }catch(_){} }
+}
+setBrightness(savedBright, false);
+brightRange.addEventListener('input',e=>setBrightness(parseFloat(e.target.value), true));
 
 // 테마 적용: 텍스처 재생성 + 코어/모서리/광택 갱신
 function applyTheme(name){
@@ -1106,6 +1126,12 @@ document.getElementById('gearBtn').addEventListener('click',()=>{ settingsEl.hid
 document.getElementById('setClose').addEventListener('click',()=>{ settingsEl.hidden=true; });
 settingsEl.addEventListener('click',e=>{ if(e.target===settingsEl) settingsEl.hidden=true; });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !settingsEl.hidden) settingsEl.hidden=true; });
+
+// 기본값 복원: 밝기 100% + 테마 고전
+document.getElementById('setReset').addEventListener('click',()=>{
+  setBrightness(1, true);
+  applyTheme('classic');
+});
 
 applyLang();
 

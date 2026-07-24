@@ -198,10 +198,104 @@
     font-family:inherit; cursor:pointer; backdrop-filter:blur(4px); letter-spacing:.5px;
   }
   #langBtn:hover{ border-color:var(--gold); color:var(--gold); }
+
+  /* ☰ 설정 버튼 (좌측 상단) */
+  #gearBtn{
+    position:fixed; top:8px; left:8px; z-index:30;
+    display:flex; align-items:center; justify-content:center;
+    width:34px; height:30px; padding:0;
+    background:rgba(40,28,20,.7); border:1px solid #5a4636; color:#e7c997;
+    border-radius:9px; cursor:pointer; backdrop-filter:blur(4px);
+  }
+  #gearBtn:hover{ border-color:var(--gold); color:var(--gold); }
+  #gearBtn svg{ display:block; }
+
+  /* 설정 오버레이 + 패널 */
+  #settings{
+    position:fixed; inset:0; z-index:50;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.55); backdrop-filter:blur(2px);
+  }
+  #settings[hidden]{ display:none; }
+  .settings-panel{
+    width:min(90vw,360px); max-height:86vh; overflow-y:auto;
+    background:linear-gradient(180deg,#241a14,#1b1310);
+    border:1px solid #5a4636; border-radius:14px;
+    box-shadow:0 10px 40px rgba(0,0,0,.6); color:var(--paper);
+    padding:16px 18px 20px;
+  }
+  .settings-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .settings-head span{ font-size:17px; font-weight:800; color:var(--gold); letter-spacing:1px; }
+  #setClose{
+    background:transparent; border:none; color:#c8b89a; font-size:20px;
+    line-height:1; cursor:pointer; padding:2px 6px; border-radius:6px;
+  }
+  #setClose:hover{ color:#fff; background:rgba(255,255,255,.08); }
+  .settings-panel section{ padding:14px 0; border-top:1px solid #3a2b20; }
+  .settings-panel section:first-of-type{ border-top:none; }
+  .settings-panel h4{
+    margin:0 0 10px; font-size:13px; font-weight:700; letter-spacing:.5px;
+    color:#c8b89a; text-transform:uppercase;
+  }
+  /* 밝기 슬라이더 */
+  .bright-row{ display:flex; align-items:center; gap:10px; }
+  .bright-row span{ font-size:14px; opacity:.75; }
+  #brightRange{ flex:1; accent-color:#ff5fa2; height:22px; cursor:pointer; }
+  /* 테마 스와치 */
+  .theme-btns{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .theme-btns button{
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    padding:8px 4px 7px; background:#2e2018; border:1px solid #5a4636;
+    border-radius:9px; color:var(--paper); font:inherit; font-size:11px; cursor:pointer;
+  }
+  .theme-btns button:hover{ border-color:#8a6a44; }
+  .theme-btns button.active{ border-color:var(--gold); box-shadow:0 0 0 1px var(--gold) inset; }
+  .theme-btns .sw{ width:26px; height:26px; border-radius:50%; border:1px solid rgba(255,255,255,.25); }
+  /* 전개도 버튼 */
+  .craft-btns{ display:flex; flex-direction:column; gap:8px; }
+  .craft-btns button, .craft-btns a{
+    display:block; text-align:center; text-decoration:none;
+    padding:11px 14px; border-radius:9px; font:inherit; font-weight:700; font-size:14px;
+    cursor:pointer; border:1px solid #5a4636; background:#3a2820; color:var(--gold);
+  }
+  .craft-btns button:hover, .craft-btns a:hover{ border-color:var(--gold); background:#463024; }
+  .craft-note{ margin:2px 0 0; font-size:11px; opacity:.6; line-height:1.4; }
 </style>
 </head>
 <body>
   <button id="langBtn" type="button" aria-label="Language"></button>
+  <button id="gearBtn" type="button" aria-label="Settings">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <div id="settings" hidden>
+    <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+      <div class="settings-head">
+        <span id="setTitle">설정</span>
+        <button id="setClose" type="button" aria-label="Close">✕</button>
+      </div>
+      <section>
+        <h4 id="setBrightLbl">밝기</h4>
+        <div class="bright-row">
+          <span>🌑</span>
+          <input type="range" id="brightRange" min="0.6" max="2" step="0.05" value="1">
+          <span>🌕</span>
+        </div>
+      </section>
+      <section>
+        <h4 id="setThemeLbl">테마</h4>
+        <div id="themeBtns" class="theme-btns"></div>
+      </section>
+      <section>
+        <h4 id="setCraftLbl">전개도 (종이공예)</h4>
+        <div class="craft-btns">
+          <button id="craftPrint" type="button">인쇄용 페이지 열기</button>
+          <a id="craftPdf" href="./juryeonggu_papercraft.pdf" download="juryeonggu_papercraft.pdf">PDF 내려받기</a>
+        </div>
+      </section>
+    </div>
+  </div>
   <header>
     <h1>Korean Folk Dice: Juryeonggu<span class="native">주령구<span class="han">(酒令具)</span> 주사위</span></h1>
     <p>신라 동궁과 월지에서 출토된 14면체 벌칙 주사위 · 굴려서 나온 면의 벌칙을 수행하세요</p>
@@ -293,6 +387,8 @@ const STRINGS = {
     count: n => n+' / 14명',
     turn: (i,n,name) => `${i} / ${n} · <b>${name}</b> 님 차례`,
     who: name => `🍶 ${name} 님`,
+    settingsTitle:'설정', brightLbl:'밝기', themeLbl:'테마', craftLbl:'전개도 (종이공예)',
+    craftPrint:'인쇄용 페이지 열기', craftPdf:'PDF 내려받기', settingsAria:'설정',
   },
   en: {
     title: 'Korean Folk Dice: Juryeonggu<span class="native">Juryeonggu <span class="han">(酒令具)</span> Dice</span>',
@@ -310,6 +406,8 @@ const STRINGS = {
     count: n => n+' / 14',
     turn: (i,n,name) => `${i} / ${n} · <b>${name}</b>'s turn`,
     who: name => `🍶 ${name}`,
+    settingsTitle:'Settings', brightLbl:'Brightness', themeLbl:'Theme', craftLbl:'Papercraft',
+    craftPrint:'Open print page', craftPdf:'Download PDF', settingsAria:'Settings',
   },
   ja: {
     title: 'Korean Folk Dice: Juryeonggu<span class="native">チュリョング <span class="han">(酒令具)</span> サイコロ</span>',
@@ -327,6 +425,8 @@ const STRINGS = {
     count: n => n+' / 14人',
     turn: (i,n,name) => `${i} / ${n} · <b>${name}</b> さんの番`,
     who: name => `🍶 ${name} さん`,
+    settingsTitle:'設定', brightLbl:'明るさ', themeLbl:'テーマ', craftLbl:'展開図（ペーパークラフト）',
+    craftPrint:'印刷ページを開く', craftPdf:'PDFダウンロード', settingsAria:'設定',
   },
 };
 const S = () => STRINGS[LANG];
@@ -409,12 +509,23 @@ function wrapText(g, text, maxW){
   return lines;
 }
 
+// ================= 주령구 표면 테마 =================
+// 각 테마: 면 배경 그라데이션(bg0→bg1), 한자/한글 글자색, 코어/모서리 색, 광택(rough/metal), 스와치색(sw)
+const THEMES = {
+  classic:{ name:{ko:'고전',en:'Classic',ja:'古典'}, bg0:'#241a14', bg1:'#090a08', hanja:'#d8463a', hangul:'#e7c997', edge:0x4a3326, core:0x0c0907, rough:0.5,  metal:0.18, sw:'#c9603a' },
+  hanji:  { name:{ko:'한지',en:'Hanji',ja:'韓紙'},   bg0:'#efe0bf', bg1:'#d3b784', hanja:'#8a1e12', hangul:'#5a3d22', edge:0x9a7a52, core:0xb59d72, rough:0.75, metal:0.04, sw:'#e9d4a4' },
+  jade:   { name:{ko:'옥',en:'Jade',ja:'玉'},       bg0:'#16302a', bg1:'#07130f', hanja:'#eaf6e2', hangul:'#a9d8c4', edge:0x2f5a4a, core:0x0a1a14, rough:0.35, metal:0.25, sw:'#6fae92' },
+  neon:   { name:{ko:'야광',en:'Neon',ja:'蛍光'},   bg0:'#0e1a12', bg1:'#05100a', hanja:'#39ff14', hangul:'#b6ffb0', edge:0x1f6a3a, core:0x06120a, rough:0.4,  metal:0.2,  sw:'#39ff14' },
+};
+const savedTheme = (()=>{ try{ const t=localStorage.getItem('jurenggu.theme'); return THEMES[t]?t:'classic'; }catch(e){ return 'classic'; } })();
+let THEME = THEMES[savedTheme];
+
 // 텍스처. full=true: 한자+한글+설명(기본 주령구), full=false: 설명만(수정 내용). glow=true: 형광 발광
-function makeTexture(rule, hanjaColor='#d8463a', hangulColor='#e7c997', glow=false, full=true){
+function makeTexture(rule, hanjaColor=THEME.hanja, hangulColor=THEME.hangul, glow=false, full=true){
   const S=320, c=document.createElement('canvas'); c.width=c.height=S;
   const g=c.getContext('2d');
   const grd=g.createRadialGradient(S/2,S*0.42,30,S/2,S/2,S*0.7);
-  grd.addColorStop(0, glow?'#0e1a12':'#241a14'); grd.addColorStop(1,'#090a08');
+  grd.addColorStop(0, glow?'#0e1a12':THEME.bg0); grd.addColorStop(1, glow?'#090a08':THEME.bg1);
   g.fillStyle=grd; g.fillRect(0,0,S,S);
 
   g.textAlign='center'; g.textBaseline='middle';
@@ -561,6 +672,10 @@ const scene=new THREE.Scene();
 const renderer=new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.outputColorSpace=THREE.SRGBColorSpace;
+// 밝기 조절: LinearToneMapping(노출=1이면 기존과 동일) → 노출값만 슬라이더로 조정
+renderer.toneMapping=THREE.LinearToneMapping;
+const savedBright=(()=>{ try{ const v=parseFloat(localStorage.getItem('jurenggu.bright')); return (v>=0.6&&v<=2)?v:1; }catch(e){ return 1; } })();
+renderer.toneMappingExposure=savedBright;
 stage.appendChild(renderer.domElement);
 
 const camera=new THREE.PerspectiveCamera(42,1,0.1,100);
@@ -582,14 +697,14 @@ const die=new THREE.Group(); scene.add(die);
 // 어두운 코어 (속이 비치지 않게)
 const core=new THREE.Mesh(
   new ConvexGeometry(VERTS).scale(0.985,0.985,0.985),
-  new THREE.MeshStandardMaterial({color:0x0c0907, roughness:0.85, metalness:0.1})
+  new THREE.MeshStandardMaterial({color:THEME.core, roughness:0.85, metalness:0.1})
 );
 die.add(core);
 
 // 모서리 라인
 const edges=new THREE.LineSegments(
   new THREE.EdgesGeometry(new ConvexGeometry(VERTS),1),
-  new THREE.LineBasicMaterial({color:0x4a3326})
+  new THREE.LineBasicMaterial({color:THEME.edge})
 );
 die.add(edges);
 
@@ -599,7 +714,7 @@ function addFace(rawVerts, rule, type){
   const {geo,normal}=buildFace(rawVerts);
   const base=makeTexture(rule);
   const mat=new THREE.MeshStandardMaterial({
-    map:base, roughness:0.5, metalness:0.18, side:THREE.DoubleSide
+    map:base, roughness:THEME.rough, metalness:THEME.metal, side:THREE.DoubleSide
   });
   const mesh=new THREE.Mesh(geo,mat);
   // 살짝 바깥으로 띄워 코어 위에 얹기
@@ -912,6 +1027,7 @@ function applyLang(){
   resetBtn.textContent=st.resetAll;
   document.querySelector('footer').innerHTML=st.footer;
   langBtn.textContent=st.langBtn;
+  applySettingsI18n();
   editBtn.textContent=editor.hidden?st.editForfeits:st.closeEditor;
   // 동적 요소
   renderPlayers();
@@ -929,6 +1045,68 @@ langBtn.addEventListener('click',()=>{
   LANG = LANG==='ko' ? 'en' : (LANG==='en' ? 'ja' : 'ko');
   applyLang();
 });
+
+// ================= 설정 패널: 밝기 · 테마 · 전개도 =================
+let curThemeName = savedTheme;
+
+// 설정 라벨/테마버튼 이름을 현재 언어로 (applyLang에서도 호출 — 함수 선언이라 호이스팅됨)
+function applySettingsI18n(){
+  const st=S();
+  const set=(id,txt)=>{ const el=document.getElementById(id); if(el) el.textContent=txt; };
+  set('setTitle', st.settingsTitle); set('setBrightLbl', st.brightLbl);
+  set('setThemeLbl', st.themeLbl); set('setCraftLbl', st.craftLbl);
+  set('craftPrint', st.craftPrint); set('craftPdf', st.craftPdf);
+  const gb=document.getElementById('gearBtn'); if(gb) gb.setAttribute('aria-label', st.settingsAria);
+  document.querySelectorAll('#themeBtns button').forEach(b=>{
+    const t=THEMES[b.dataset.theme], lbl=b.querySelector('.lbl');
+    if(t&&lbl) lbl.textContent=t.name[LANG];
+  });
+}
+
+// 밝기: LinearToneMapping 노출값만 조정 (0.6~2.0, 1=기존)
+const brightRange=document.getElementById('brightRange');
+brightRange.value=renderer.toneMappingExposure;
+brightRange.addEventListener('input',e=>{
+  const v=parseFloat(e.target.value);
+  renderer.toneMappingExposure=v;
+  try{ localStorage.setItem('jurenggu.bright', String(v)); }catch(_){}
+});
+
+// 테마 적용: 텍스처 재생성 + 코어/모서리/광택 갱신
+function applyTheme(name){
+  if(!THEMES[name]) name='classic';
+  THEME=THEMES[name]; curThemeName=name;
+  try{ localStorage.setItem('jurenggu.theme', name); }catch(_){}
+  core.material.color.setHex(THEME.core);
+  edges.material.color.setHex(THEME.edge);
+  faces.forEach((f,i)=>{ f.mat.roughness=THEME.rough; f.mat.metalness=THEME.metal; refreshFace(i); });
+  document.querySelectorAll('#themeBtns button').forEach(b=>b.classList.toggle('active', b.dataset.theme===name));
+}
+
+// 테마 버튼 생성
+const themeBtns=document.getElementById('themeBtns');
+Object.keys(THEMES).forEach(key=>{
+  const t=THEMES[key];
+  const b=document.createElement('button');
+  b.type='button'; b.dataset.theme=key;
+  b.innerHTML=`<span class="sw" style="background:${t.sw}"></span><span class="lbl">${t.name[LANG]}</span>`;
+  if(key===curThemeName) b.classList.add('active');
+  b.addEventListener('click',()=>applyTheme(key));
+  themeBtns.appendChild(b);
+});
+
+// 전개도: 인쇄용 페이지 새 탭 열기 (PDF는 <a download>로 처리)
+document.getElementById('craftPrint').addEventListener('click',()=>{
+  window.open('./juryeonggu_papercraft.html','_blank','noopener');
+});
+
+// 패널 열고 닫기
+const settingsEl=document.getElementById('settings');
+document.getElementById('gearBtn').addEventListener('click',()=>{ settingsEl.hidden=false; });
+document.getElementById('setClose').addEventListener('click',()=>{ settingsEl.hidden=true; });
+settingsEl.addEventListener('click',e=>{ if(e.target===settingsEl) settingsEl.hidden=true; });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !settingsEl.hidden) settingsEl.hidden=true; });
+
 applyLang();
 
 // 웹폰트 로드 완료 후 텍스처를 다시 그려 한자 글꼴 보장

@@ -1,5 +1,5 @@
 // 주령구 PWA 서비스 워커
-const CACHE = 'jurenggu-v6';
+const CACHE = 'jurenggu-v7';
 
 // 앱 실행에 필요한 로컬 자산 (오프라인 대비 미리 저장)
 const PRECACHE = [
@@ -12,7 +12,9 @@ const PRECACHE = [
   './vendor/three/addons/math/ConvexHull.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/icon-maskable-512.png'
+  './icons/icon-maskable-512.png',
+  './juryeonggu_papercraft.html',
+  './juryeonggu_papercraft.pdf'
 ];
 
 self.addEventListener('install', e => {

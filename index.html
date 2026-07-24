@@ -58,6 +58,64 @@
       linear-gradient(160deg,#0d1a10 0%, #08120b 55%, #030805 100%);
     background-attachment:fixed;
   }
+  /* ===== 라이트 모드: 밝은 배경(테마별 hue) ===== */
+  body[data-mode="light"]{
+    color:#2b1d12;
+    background:
+      radial-gradient(900px 520px at 15% 8%, rgba(230,180,90,.22), transparent 60%),
+      radial-gradient(900px 520px at 85% 12%, rgba(200,150,70,.18), transparent 60%),
+      linear-gradient(160deg,#faf3e4 0%, #f0e4cc 55%, #e6d7b8 100%);
+    background-attachment:fixed;
+  }
+  body[data-mode="light"][data-theme="hanji"]{
+    background:
+      radial-gradient(900px 520px at 15% 8%, rgba(220,170,90,.24), transparent 60%),
+      linear-gradient(160deg,#f9f1de 0%, #efe0c2 55%, #e6d3ac 100%);
+    background-attachment:fixed;
+  }
+  body[data-mode="light"][data-theme="jade"]{
+    background:
+      radial-gradient(900px 520px at 15% 8%, rgba(90,190,150,.22), transparent 60%),
+      linear-gradient(160deg,#eef7f0 0%, #dcebdf 55%, #cbe2d2 100%);
+    background-attachment:fixed;
+  }
+  body[data-mode="light"][data-theme="neon"]{
+    background:
+      radial-gradient(900px 520px at 15% 8%, rgba(60,220,110,.20), transparent 60%),
+      linear-gradient(160deg,#eefff2 0%, #dcf5e2 55%, #ccf0d6 100%);
+    background-attachment:fixed;
+  }
+  /* ===== 라이트 모드: UI 요소 색 반전 ===== */
+  body[data-mode="light"] header p{ color:#7a5a34; }
+  body[data-mode="light"] #hint{ color:#8a6a44; }
+  body[data-mode="light"] header h1 .han{ -webkit-text-fill-color:#b5852a; color:#b5852a; }
+  body[data-mode="light"] header h1 .native{ -webkit-text-fill-color:#8a6a3a; color:#8a6a3a; }
+  body[data-mode="light"] #setup{ background:rgba(255,250,240,.66); border-color:#d8c29a; }
+  body[data-mode="light"] #nameInput,
+  body[data-mode="light"] .rule-row input{ background:#fffdf7; color:#2b1d12; border-color:#cbb488; }
+  body[data-mode="light"] .chip{ background:#efe2c8; color:#3a2a18; border-color:#d0bb90; }
+  body[data-mode="light"] #addBtn{ background:#efe0c2; color:#7a4b1e; border-color:#e0b884; }
+  body[data-mode="light"] #count{ color:#7a5a3a; }
+  body[data-mode="light"] #editor{ border-top-color:#d8c29a; }
+  body[data-mode="light"] .editor-head{ color:#a06a1e; }
+  body[data-mode="light"] button.ghost{ border-color:#cbb488; color:#7a5a3a; }
+  body[data-mode="light"] footer{ color:#9a8258; }
+  body[data-mode="light"] #langBtn,
+  body[data-mode="light"] #gearBtn{ background:rgba(255,250,240,.8); border-color:#d0bb90; color:#7a4b1e; }
+  body[data-mode="light"] .settings-panel{ background:linear-gradient(180deg,#fbf4e6,#f3e8d2); border-color:#d8c29a; color:#2b1d12; }
+  body[data-mode="light"] .settings-head span{ color:#a06a1e; }
+  body[data-mode="light"] .settings-panel h4{ color:#8a6a44; }
+  body[data-mode="light"] .settings-panel section,
+  body[data-mode="light"] .settings-foot{ border-top-color:#e3d3b3; }
+  body[data-mode="light"] .theme-btns button,
+  body[data-mode="light"] .mode-btns button{ background:#f1e6cf; border-color:#d0bb90; color:#2b1d12; }
+  body[data-mode="light"] .theme-btns button.active,
+  body[data-mode="light"] .mode-btns button.active{ border-color:#b5852a; box-shadow:0 0 0 1px #b5852a inset; }
+  body[data-mode="light"] .craft-btns button,
+  body[data-mode="light"] .craft-btns a{ background:#efe0c2; border-color:#e0b884; color:#7a4b1e; }
+  body[data-mode="light"] #setReset{ border-color:#cbb488; color:#7a5a3a; }
+  body[data-mode="light"] #setClose{ color:#8a6a44; }
+  body[data-mode="light"] #brightReadout.readout{ color:#a06a1e; }
   header{ text-align:center; padding:40px 14px 2px; flex:0 0 auto; }
   header h1{
     font-family:"Noto Serif KR",serif; font-weight:900;
@@ -263,6 +321,15 @@
   .bright-row{ display:flex; align-items:center; gap:10px; }
   .bright-row span{ font-size:14px; opacity:.75; }
   #brightRange{ flex:1; accent-color:#ff5fa2; height:22px; cursor:pointer; }
+  /* 모드 토글 */
+  .mode-btns{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+  .mode-btns button{
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    padding:11px 8px; background:#2e2018; border:1px solid #5a4636;
+    border-radius:9px; color:var(--paper); font:inherit; font-size:14px; font-weight:700; cursor:pointer;
+  }
+  .mode-btns button:hover{ border-color:#8a6a44; }
+  .mode-btns button.active{ border-color:var(--gold); box-shadow:0 0 0 1px var(--gold) inset; }
   /* 테마 스와치 */
   .theme-btns{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
   .theme-btns button{
@@ -304,6 +371,13 @@
         <span id="setTitle">설정</span>
         <button id="setClose" type="button" aria-label="Close">✕</button>
       </div>
+      <section>
+        <h4 id="setModeLbl">모드</h4>
+        <div id="modeBtns" class="mode-btns">
+          <button type="button" data-mode="dark">🌙 <span class="lbl">다크</span></button>
+          <button type="button" data-mode="light">☀️ <span class="lbl">라이트</span></button>
+        </div>
+      </section>
       <section>
         <h4 id="setBrightLbl">밝기</h4>
         <div class="bright-row">
@@ -424,6 +498,7 @@ const STRINGS = {
     settingsTitle:'설정', brightLbl:'밝기', themeLbl:'테마', craftLbl:'전개도 (종이공예)',
     craftPrint:'인쇄용 페이지 열기', craftPdf:'PDF 내려받기', settingsAria:'설정',
     autoSave:'변경 사항은 자동 저장됩니다',
+    modeLbl:'모드', modeDark:'다크', modeLight:'라이트',
   },
   en: {
     title: 'Korean Folk Dice: Juryeonggu<span class="native">Juryeonggu <span class="han">(酒令具)</span> Dice</span>',
@@ -444,6 +519,7 @@ const STRINGS = {
     settingsTitle:'Settings', brightLbl:'Brightness', themeLbl:'Theme', craftLbl:'Papercraft',
     craftPrint:'Open print page', craftPdf:'Download PDF', settingsAria:'Settings',
     autoSave:'Changes are saved automatically',
+    modeLbl:'Mode', modeDark:'Dark', modeLight:'Light',
   },
   ja: {
     title: 'Korean Folk Dice: Juryeonggu<span class="native">チュリョング <span class="han">(酒令具)</span> サイコロ</span>',
@@ -464,6 +540,7 @@ const STRINGS = {
     settingsTitle:'設定', brightLbl:'明るさ', themeLbl:'テーマ', craftLbl:'展開図（ペーパークラフト）',
     craftPrint:'印刷ページを開く', craftPdf:'PDFダウンロード', settingsAria:'設定',
     autoSave:'変更は自動的に保存されます',
+    modeLbl:'モード', modeDark:'ダーク', modeLight:'ライト',
   },
 };
 const S = () => STRINGS[LANG];
@@ -548,14 +625,25 @@ function wrapText(g, text, maxW){
 
 // ================= 주령구 표면 테마 =================
 // 각 테마: 면 배경 그라데이션(bg0→bg1), 한자/한글 글자색, 코어/모서리 색, 광택(rough/metal), 스와치색(sw)
+// 각 테마=색 계열(sw). 모드별 팔레트: dark(어두운 배경)→밝은 주령구 / light(밝은 배경)→어두운 주령구
 const THEMES = {
-  classic:{ name:{ko:'고전',en:'Classic',ja:'古典'}, bg0:'#241a14', bg1:'#090a08', hanja:'#d8463a', hangul:'#e7c997', edge:0x4a3326, core:0x0c0907, rough:0.5,  metal:0.18, sw:'#c9603a' },
-  hanji:  { name:{ko:'한지',en:'Hanji',ja:'韓紙'},   bg0:'#efe0bf', bg1:'#d3b784', hanja:'#8a1e12', hangul:'#5a3d22', edge:0x9a7a52, core:0xb59d72, rough:0.75, metal:0.04, sw:'#e9d4a4' },
-  jade:   { name:{ko:'옥',en:'Jade',ja:'玉'},       bg0:'#16302a', bg1:'#07130f', hanja:'#eaf6e2', hangul:'#a9d8c4', edge:0x2f5a4a, core:0x0a1a14, rough:0.35, metal:0.25, sw:'#6fae92' },
-  neon:   { name:{ko:'야광',en:'Neon',ja:'蛍光'},   bg0:'#0e1a12', bg1:'#05100a', hanja:'#39ff14', hangul:'#b6ffb0', edge:0x1f6a3a, core:0x06120a, rough:0.4,  metal:0.2,  sw:'#39ff14' },
+  classic:{ name:{ko:'고전',en:'Classic',ja:'古典'}, sw:'#c9603a',
+    dark: { bg0:'#f3e6cf', bg1:'#dcc79a', hanja:'#8a1e12', hangul:'#6a4520', edge:0xcaa46a, core:0xd8c090, rough:0.55, metal:0.10 },
+    light:{ bg0:'#241a14', bg1:'#090a08', hanja:'#d8463a', hangul:'#e7c997', edge:0x4a3326, core:0x0c0907, rough:0.5,  metal:0.18 } },
+  hanji:{ name:{ko:'한지',en:'Hanji',ja:'韓紙'}, sw:'#e9d4a4',
+    dark: { bg0:'#f9f0dc', bg1:'#e6d1a6', hanja:'#6a3410', hangul:'#5a3d22', edge:0xc8a970, core:0xe0cc9a, rough:0.7, metal:0.04 },
+    light:{ bg0:'#3a2717', bg1:'#160e07', hanja:'#e0a050', hangul:'#e7c997', edge:0x6a4a2a, core:0x1a1108, rough:0.7, metal:0.06 } },
+  jade:{ name:{ko:'옥',en:'Jade',ja:'玉'}, sw:'#6fae92',
+    dark: { bg0:'#e0f0e6', bg1:'#b6dcc6', hanja:'#1c5a3a', hangul:'#2f6a4a', edge:0x8fc2a4, core:0xc2ddce, rough:0.4,  metal:0.18 },
+    light:{ bg0:'#16302a', bg1:'#07130f', hanja:'#eaf6e2', hangul:'#a9d8c4', edge:0x2f5a4a, core:0x0a1a14, rough:0.35, metal:0.25 } },
+  neon:{ name:{ko:'야광',en:'Neon',ja:'蛍光'}, sw:'#39ff14',
+    dark: { bg0:'#d8ffe2', bg1:'#a6f0bc', hanja:'#0a6a26', hangul:'#12833a', edge:0x6fd090, core:0xbdf0cb, rough:0.45, metal:0.15 },
+    light:{ bg0:'#0e1a12', bg1:'#05100a', hanja:'#39ff14', hangul:'#b6ffb0', edge:0x1f6a3a, core:0x06120a, rough:0.4,  metal:0.2 } },
 };
-const savedTheme = (()=>{ try{ const t=localStorage.getItem('jurenggu.theme'); return THEMES[t]?t:'classic'; }catch(e){ return 'classic'; } })();
-let THEME = THEMES[savedTheme];
+const savedTheme=(()=>{ try{ const t=localStorage.getItem('jurenggu.theme'); return THEMES[t]?t:'classic'; }catch(e){ return 'classic'; } })();
+const savedMode=(()=>{ try{ const m=localStorage.getItem('jurenggu.mode'); return (m==='light'||m==='dark')?m:'dark'; }catch(e){ return 'dark'; } })();
+let MODE=savedMode;
+let THEME=THEMES[savedTheme][MODE];
 
 // 텍스처. full=true: 한자+한글+설명(기본 주령구), full=false: 설명만(수정 내용). glow=true: 형광 발광
 function makeTexture(rule, hanjaColor=THEME.hanja, hangulColor=THEME.hangul, glow=false, full=true){
@@ -1082,12 +1170,14 @@ langBtn.addEventListener('click',()=>{
 // ================= 설정 패널: 밝기 · 테마 · 전개도 =================
 let curThemeName = savedTheme;
 document.body.dataset.theme = curThemeName;   // 로드 시 저장된 테마 배경 적용
+document.body.dataset.mode = MODE;            // 로드 시 저장된 라이트/다크 모드 적용
 
 // 설정 라벨/테마버튼 이름을 현재 언어로 (applyLang에서도 호출 — 함수 선언이라 호이스팅됨)
 function applySettingsI18n(){
   const st=S();
   const set=(id,txt)=>{ const el=document.getElementById(id); if(el) el.textContent=txt; };
-  set('setTitle', st.settingsTitle); set('setBrightLbl', st.brightLbl);
+  set('setTitle', st.settingsTitle); set('setModeLbl', st.modeLbl);
+  set('setBrightLbl', st.brightLbl);
   set('setThemeLbl', st.themeLbl); set('setCraftLbl', st.craftLbl);
   set('craftPrint', st.craftPrint); set('craftPdf', st.craftPdf);
   set('setReset', st.restoreDefaults); set('autoSaveNote', st.autoSave);
@@ -1095,6 +1185,10 @@ function applySettingsI18n(){
   document.querySelectorAll('#themeBtns button').forEach(b=>{
     const t=THEMES[b.dataset.theme], lbl=b.querySelector('.lbl');
     if(t&&lbl) lbl.textContent=t.name[LANG];
+  });
+  const modeNames={dark:st.modeDark, light:st.modeLight};
+  document.querySelectorAll('#modeBtns button').forEach(b=>{
+    const lbl=b.querySelector('.lbl'); if(lbl) lbl.textContent=modeNames[b.dataset.mode];
   });
 }
 
@@ -1115,16 +1209,29 @@ function setBrightness(v, save){
 setBrightness(savedBright, false);
 brightRange.addEventListener('input',e=>setBrightness(parseFloat(e.target.value), true));
 
-// 테마 적용: 텍스처 재생성 + 코어/모서리/광택 갱신
-function applyTheme(name){
-  if(!THEMES[name]) name='classic';
-  THEME=THEMES[name]; curThemeName=name;
-  try{ localStorage.setItem('jurenggu.theme', name); }catch(_){}
-  document.body.dataset.theme=name;          // 페이지 배경 전환
+// 주령구 색 갱신(현재 테마×모드) — 텍스처/코어/모서리/광택
+function refreshDie(){
+  THEME=THEMES[curThemeName][MODE];
   core.material.color.setHex(THEME.core);
   edges.material.color.setHex(THEME.edge);
   faces.forEach((f,i)=>{ f.mat.roughness=THEME.rough; f.mat.metalness=THEME.metal; refreshFace(i); });
+}
+// 테마(색 계열) 전환
+function applyTheme(name){
+  if(!THEMES[name]) name='classic';
+  curThemeName=name;
+  try{ localStorage.setItem('jurenggu.theme', name); }catch(_){}
+  document.body.dataset.theme=name;          // 페이지 배경 전환
+  refreshDie();
   document.querySelectorAll('#themeBtns button').forEach(b=>b.classList.toggle('active', b.dataset.theme===name));
+}
+// 라이트/다크 모드 전환 (배경·UI는 body[data-mode] CSS, 주령구는 refreshDie)
+function applyMode(mode){
+  MODE = (mode==='light')?'light':'dark';
+  try{ localStorage.setItem('jurenggu.mode', MODE); }catch(_){}
+  document.body.dataset.mode=MODE;
+  refreshDie();
+  document.querySelectorAll('#modeBtns button').forEach(b=>b.classList.toggle('active', b.dataset.mode===MODE));
 }
 
 // 테마 버튼 생성
@@ -1139,6 +1246,12 @@ Object.keys(THEMES).forEach(key=>{
   themeBtns.appendChild(b);
 });
 
+// 모드 버튼(HTML에 이미 존재) 활성 표시 + 클릭
+document.querySelectorAll('#modeBtns button').forEach(b=>{
+  if(b.dataset.mode===MODE) b.classList.add('active');
+  b.addEventListener('click',()=>applyMode(b.dataset.mode));
+});
+
 // 전개도: 인쇄용 페이지 새 탭 열기 (PDF는 <a download>로 처리)
 document.getElementById('craftPrint').addEventListener('click',()=>{
   window.open('./juryeonggu_papercraft.html','_blank','noopener');
@@ -1151,8 +1264,9 @@ document.getElementById('setClose').addEventListener('click',()=>{ settingsEl.hi
 settingsEl.addEventListener('click',e=>{ if(e.target===settingsEl) settingsEl.hidden=true; });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !settingsEl.hidden) settingsEl.hidden=true; });
 
-// 기본값 복원: 밝기 100% + 테마 고전
+// 기본값 복원: 다크 모드 + 밝기 100% + 테마 고전
 document.getElementById('setReset').addEventListener('click',()=>{
+  applyMode('dark');
   setBrightness(1, true);
   applyTheme('classic');
 });

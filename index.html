@@ -646,11 +646,13 @@ let MODE=savedMode;
 let THEME=THEMES[savedTheme][MODE];
 
 // 텍스처. full=true: 한자+한글+설명(기본 주령구), full=false: 설명만(수정 내용). glow=true: 형광 발광
-function makeTexture(rule, hanjaColor=THEME.hanja, hangulColor=THEME.hangul, glow=false, full=true){
+function makeTexture(rule, hanjaColor=THEME.hanja, hangulColor=THEME.hangul, glow=false, full=true, emissive=false){
   const S=320, c=document.createElement('canvas'); c.width=c.height=S;
   const g=c.getContext('2d');
   const grd=g.createRadialGradient(S/2,S*0.42,30,S/2,S/2,S*0.7);
-  grd.addColorStop(0, glow?'#0e1a12':THEME.bg0); grd.addColorStop(1, glow?'#090a08':THEME.bg1);
+  // emissive 텍스처는 검은 배경(글자만 발광) / 그 외에는 항상 현재 테마·모드 배경
+  if(emissive){ grd.addColorStop(0,'#000'); grd.addColorStop(1,'#000'); }
+  else { grd.addColorStop(0, THEME.bg0); grd.addColorStop(1, THEME.bg1); }
   g.fillStyle=grd; g.fillRect(0,0,S,S);
 
   g.textAlign='center'; g.textBaseline='middle';
@@ -853,10 +855,8 @@ function refreshFace(i){
   const full=!f.edited;                     // 수정 안 한 면=기본(한자+한글+설명), 수정한 면=설명만
   if(f.baseTex) f.baseTex.dispose();
   f.baseTex=makeTexture(f.rule, undefined, undefined, false, full);
-  if(f.lit){ // 형광으로 빛나는 면이면 형광 텍스처도 즉시 갱신
-    if(f.neonTex) f.neonTex.dispose();
-    f.neonTex=makeTexture(f.rule, NEON_HANJA, NEON_HANGUL, true, full);
-    f.mat.map=f.neonTex; f.mat.emissiveMap=f.neonTex;
+  if(f.lit){ // 형광으로 빛나는 면이면 형광 텍스처도 즉시 갱신 (배경+글자 / 발광용 분리)
+    applyLitTextures(f);
   } else {
     f.mat.map=f.baseTex;
   }
@@ -1037,6 +1037,15 @@ document.getElementById('confirmEdit').addEventListener('click',()=>{
 
 // ---- 선택된 면 형광 발광 ----
 const NEON_HANJA='#39ff14', NEON_HANGUL='#b6ffb0';
+// 당첨 면: map=현재 모드 배경+초록 글자, emissiveMap=검은 배경+글자(→ 글자만 발광)
+function applyLitTextures(f){
+  const full=!f.edited;
+  if(f.neonTex) f.neonTex.dispose();
+  if(f.neonEmis) f.neonEmis.dispose();
+  f.neonTex =makeTexture(f.rule, NEON_HANJA, NEON_HANGUL, true, full, false);
+  f.neonEmis=makeTexture(f.rule, NEON_HANJA, NEON_HANGUL, true, full, true);
+  f.mat.map=f.neonTex; f.mat.emissiveMap=f.neonEmis;
+}
 function unlightFaces(){
   faces.forEach(f=>{
     if(f.lit){
@@ -1049,9 +1058,7 @@ function unlightFaces(){
 function lightFace(idx){
   unlightFaces();
   const f=faces[idx];
-  if(f.neonTex) f.neonTex.dispose();
-  f.neonTex=makeTexture(f.rule, NEON_HANJA, NEON_HANGUL, true, !f.edited);
-  f.mat.map=f.neonTex; f.mat.emissiveMap=f.neonTex;
+  applyLitTextures(f);
   f.mat.emissive.setHex(0xffffff); f.mat.emissiveIntensity=1.7;
   f.mat.needsUpdate=true; f.lit=true;
 }

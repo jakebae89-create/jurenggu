@@ -923,29 +923,51 @@ function refreshFace(i){
 }
 
 // ---- 저장/복원 (localStorage) ----
-const LS_PLAYERS='jurenggu.players', LS_RULES='jurenggu.rules';
+// v2: **사용자가 실제로 고친 면만**, 그 면의 '기본 한자'를 키로 저장한다.
+// v1(구버전)은 14면 전부를 배열 순서로 통째 저장해서 두 가지 문제가 있었다:
+//   (1) 공식 벌칙 문안을 고쳐 배포해도 기존 사용자에겐 옛 문구가 계속 덮여 안 바뀜
+//   (2) 면 배정(SQUARE_RULES/HEX_RULES 순서)이 바뀌면 저장값이 엉뚱한 면에 붙음
+// → v1은 '고친 항목만' 한자로 짝지어 옮기고 삭제한다.
+const LS_PLAYERS='jurenggu.players', LS_RULES='jurenggu.rules.v2', LS_RULES_V1='jurenggu.rules';
+// 이체자 교체(舞→儛, 笑→咲) 전에 저장된 값도 이어받기 위한 키 정규화
+const normRuleKey = s => String(s).replace('禁聲作舞','禁聲作儛').replace('飮盡大笑','飮盡大咲');
 function saveRules(){
   try{
-    localStorage.setItem(LS_RULES, JSON.stringify(
-      faces.map(f=>({ hanja:f.rule.hanja, hangul:f.rule.hangul, read:f.rule.read, desc:f.rule.desc, descEn:f.rule.descEn, descJa:f.rule.descJa, edited:f.edited }))
-    ));
+    const out={};
+    faces.forEach((f,i)=>{
+      if(!f.edited) return;
+      out[DEFAULT_RULES[i].hanja]={ desc:f.rule.desc, descEn:f.rule.descEn, descJa:f.rule.descJa };
+    });
+    localStorage.setItem(LS_RULES, JSON.stringify(out));
   }catch(e){}
+}
+function applyEdits(map){
+  faces.forEach((f,i)=>{
+    const r=map[DEFAULT_RULES[i].hanja];
+    if(!r) return;
+    if(typeof r.desc==='string') f.rule.desc=r.desc;
+    if(typeof r.descEn==='string') f.rule.descEn=r.descEn;
+    if(typeof r.descJa==='string') f.rule.descJa=r.descJa;
+    f.edited=true;
+    refreshFace(i);
+  });
 }
 function loadRules(){
   try{
-    const arr=JSON.parse(localStorage.getItem(LS_RULES)||'null');
-    if(!Array.isArray(arr)) return;
-    faces.forEach((f,i)=>{
-      const r=arr[i]; if(!r) return;
-      if(typeof r.hanja==='string') f.rule.hanja=r.hanja;
-      if(typeof r.hangul==='string') f.rule.hangul=r.hangul;
-      if(typeof r.read==='string') f.rule.read=r.read;
-      if(typeof r.desc==='string') f.rule.desc=r.desc;
-      if(typeof r.descEn==='string') f.rule.descEn=r.descEn;
-      if(typeof r.descJa==='string') f.rule.descJa=r.descJa;
-      f.edited=!!r.edited;
-      refreshFace(i);
-    });
+    const v2=JSON.parse(localStorage.getItem(LS_RULES)||'null');
+    if(v2 && typeof v2==='object' && !Array.isArray(v2)){ applyEdits(v2); return; }
+    const old=JSON.parse(localStorage.getItem(LS_RULES_V1)||'null');
+    if(Array.isArray(old)){
+      const map={};
+      old.forEach(r=>{
+        if(r && r.edited && typeof r.hanja==='string'){
+          map[normRuleKey(r.hanja)]={ desc:r.desc, descEn:r.descEn, descJa:r.descJa };
+        }
+      });
+      applyEdits(map);
+      saveRules();
+      localStorage.removeItem(LS_RULES_V1);
+    }
   }catch(e){}
 }
 loadRules();

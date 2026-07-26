@@ -260,9 +260,9 @@ function tryPlaceChild(pi, fi, key){
   return {pts:cand, ang}; // ang: 면 로컬 → 페이지 좌표 회전량 (글자 방향 계산에 사용)
 }
 
-// 서브넷당 최대 면 수 → 여러 페이지로 분할.
-// 기본 7 = A4 2장(인쇄용). `--single`을 주면 14면을 한 장에 펼친다(실물 전개도와 대조용).
-const MAX_FACES = process.argv.includes('--single') ? 14 : 7;
+// 14면을 항상 한 덩어리(통짜)로 펼친다 → 인쇄물이 1장으로 끝난다.
+// 기본 = A4 1장(인쇄용, 자동 축소 배치). `--a3`를 주면 A3 1장(실물 전개도와 대조용, 더 큼).
+const MAX_FACES = 14;
 for(let start=0; start<faces.length; start++){
   if(placed[start]) continue;
   placeRootAt(start);
@@ -380,10 +380,9 @@ const compData=comps.map(c=>{
 // 큰 것부터
 compData.sort((a,b)=>(b.w*b.h)-(a.w*a.h));
 
-// A4 페이지 (mm)
-// 기본 A4. --single(14면 통짜)은 A4를 넘치므로 A3로 키운다.
-const SINGLE = MAX_FACES>7;
-const PAGE_W=SINGLE?297:210, PAGE_H=SINGLE?420:297, MARGIN=10, HEADER=20;
+// 페이지 (mm) — 기본 A4 1장, --a3면 A3 1장(같은 전개도를 더 크게)
+const A3 = process.argv.includes('--a3');
+const PAGE_W=A3?297:210, PAGE_H=A3?420:297, MARGIN=10, HEADER=20;
 const AREA_W=PAGE_W-2*MARGIN;
 const pages=[]; // each: {items:[{cid, x, y}], }
 function newPage(){ pages.push({items:[], cursorX:MARGIN, cursorY:MARGIN+HEADER, rowH:0}); return pages[pages.length-1]; }
@@ -395,7 +394,9 @@ for(const cd of compData){
   if(pg.cursorX+cd.w > MARGIN+AREA_W+0.1){
     pg.cursorY+=pg.rowH+8; pg.cursorX=MARGIN; pg.rowH=0;
   }
-  if(pg.cursorY+cd.h > PAGE_H-MARGIN){
+  // 페이지에 이미 뭔가 있을 때만 개행. 빈 페이지보다 큰 덩어리는 그대로 두고
+  // 렌더 단계의 자동 축소(scale)로 맞춘다 — 안 그러면 1장짜리가 2장으로 쪼개진다.
+  if(pg.items.length && pg.cursorY+cd.h > PAGE_H-MARGIN){
     pg=newPage();
   }
   pg.items.push({cid:cd.id, x:pg.cursorX - cd.b.minx, y:pg.cursorY - cd.b.miny});
@@ -541,7 +542,7 @@ const html=`<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <title>Juryeonggu 14-Face Papercraft</title>
 <style>
   ${FONT_FACE}
-  @page { size: A4; margin: 0; }
+  @page { size: ${A3?'A3':'A4'}; margin: 0; }
   html,body{margin:0;padding:0;background:#fff;}
   .page{display:block; page-break-after:always; margin:0 auto;}
   .page:last-child{page-break-after:auto;}
@@ -566,7 +567,7 @@ ${svgPages.join('\n')}
 </body></html>`;
 
 const outDir=process.argv.slice(2).find(a=>!a.startsWith('--'))||'.'; // 플래그는 경로로 오해하지 않게
-const outName = MAX_FACES>7 ? 'juryeonggu_papercraft_single.html' : 'juryeonggu_papercraft.html';
+const outName = A3 ? 'juryeonggu_papercraft_single.html' : 'juryeonggu_papercraft.html';
 fs.writeFileSync(path.join(outDir,outName), html, 'utf8');
 console.log('output:', outName);
 console.log('components:', comps.length, '| pages:', pages.length, '| seams:', seamCounter);

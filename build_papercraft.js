@@ -34,23 +34,27 @@ const VERTS=buildVertices(); // 24개
 const SQUARE_CENTERS=[[C,0,0],[-C,0,0],[0,C,0],[0,-C,0],[0,0,C],[0,0,-C]];
 const HEX_CENTERS=[[1,1,1],[1,1,-1],[1,-1,1],[1,-1,-1],[-1,1,1],[-1,1,-1],[-1,-1,1],[-1,-1,-1]];
 
+// 경주문화원 공식 자료 기준 (index.html의 descEn과 동일하게 유지)
+// 배열 순서 = 면 위치(SQUARE_CENTERS/HEX_CENTERS) 배정.
+// 이 순서는 임의가 아니라 실물 전개도 사진에서 읽은 인접 관계 + 방향(반시계) 제약으로
+// solve_assignment.js가 푼 결과다. 순서를 바꾸면 어느 벌칙이 어느 면에 오는지가 바뀐다.
 const SQUARE_RULES=[
- {hanja:'禁聲作舞',en:'Dance without making a sound'},
- {hanja:'衆人打鼻',en:'Let everyone tap your nose'},
- {hanja:'飮盡大笑',en:'Drink it all and laugh out loud'},
- {hanja:'三盞一去',en:'Down three cups in one go'},
- {hanja:'有犯空過',en:'Stay still even if someone provokes you'},
- {hanja:'自唱自飮',en:'Sing a song yourself, then drink'},
+ {hanja:'禁聲作儛',en:'Dance with no music playing.'},
+ {hanja:'有犯空過',en:'Put up with whatever anyone does to you.'},
+ {hanja:'飮盡大咲',en:'Drain the cup you were given and laugh out loud.'},
+ {hanja:'衆人打鼻',en:'Let everyone hit your nose.'},
+ {hanja:'自唱自飮',en:'Sing by yourself, then drink by yourself.'},
+ {hanja:'三盞一去',en:'Drink three cups at once.'},
 ];
 const HEX_RULES=[
- {hanja:'曲臂則盡',en:'Bend your arm and drink it all'},
- {hanja:'弄面孔過',en:'Stay still while your face is tickled'},
- {hanja:'任意請歌',en:'Ask anyone you like to sing'},
- {hanja:'月鏡一曲',en:"Sing a verse of 'Wolgyeong'"},
- {hanja:'空詠詩過',en:'Recite a poem'},
- {hanja:'兩盞則放',en:'If two cups are left, pour them out'},
- {hanja:'醜物莫放',en:"Don't toss away the dirty thing"},
- {hanja:'自唱怪來晚',en:"Sing the song 'Goeraeman' yourself"},
+ {hanja:'任意請歌',en:'Ask anyone you like to sing a song.'},
+ {hanja:'醜物莫放',en:'Show everyone something embarrassing.'},
+ {hanja:'曲臂則盡',en:'Link arms with the person next to you and drink.'},
+ {hanja:'空詠詩過',en:'Compose a poem on the spot and recite it.'},
+ {hanja:'兩盞則放',en:'Drink two cups back to back.'},
+ {hanja:'弄面孔過',en:'Stay still even when someone tickles your face.'},
+ {hanja:'月鏡一曲',en:'Look at the moon and sing a song.'},
+ {hanja:'自唱怪來晚',en:'Sing alone, then shout at the top of your lungs.'},
 ];
 
 const eq=(a,b)=>Math.abs(a-b)<1e-6;
@@ -97,12 +101,16 @@ faces.forEach((f,i)=>{
 });
 
 // ---------- 각 면의 로컬 2D 좌표 (바깥면이 위를 보도록) ----------
+// 주의: SVG는 y축이 아래로 향한다. e2 = n×e1 (우수계)로 잡으면 화면상 상하가 뒤집혀
+// 면을 '안쪽'에서 본 그림이 되고, 접으면 거울상 주사위가 나온다.
+// 따라서 e2 = e1×n 으로 잡아 SVG 좌표계에서 '바깥면을 정면으로 본' 전개도가 되게 한다.
 const UNIT_MM = 30; // 사각형 변(√2단위) ≈ 42mm
 faces.forEach(f=>{
   const P=f.vi.map(i=>VERTS[i]);
   const o=P[0];
   const e1=norm(sub(P[1],o));
-  const e2=norm(cross(f.normal,e1)); // n이 위를 향하는 우수 좌표계
+  const e2=norm(cross(e1,f.normal)); // SVG(y-down)에서 바깥면이 정면으로 보이는 축
+  f.o=o; f.e1=e1; f.e2=e2;
   f.local=P.map(p=>{
     const d=sub(p,o);
     return [dot(d,e1)*UNIT_MM, dot(d,e2)*UNIT_MM];
@@ -133,6 +141,52 @@ for(const [key,arr] of edgeMap){
     adj[y.fi].push({nb:x.fi,key,ei:y.ei,elen});
   }
 }
+const norm2=a=>{const l=Math.hypot(a[0],a[1])||1; return [a[0]/l, a[1]/l];};
+
+// ---------- 면별 글자 방향(고증) ----------
+// 각 면의 글자 '위쪽'이 어느 이웃 면 쪽을 향하는지로 정의한다.
+// 이렇게 두면 (1) 사람이 실물 사진 보고 검증·수정하기 쉽고
+//            (2) 전개도를 어떻게 펼치든 접었을 때 방향이 항상 같으며
+//            (3) index.html의 3D와 같은 표를 공유할 수 있다.
+// ※ 값은 실물 대조로 확정해야 하는 고증 데이터. index.html의 FACE_UP과 반드시 동일하게 유지.
+// 📐 = 목제주령구 전개도(자료/주령구 전개도.jpg)에서 각도로 측정한 값 (2026-07-26)
+//      측정법: 면의 글자 세로열 방향(글자 위쪽 각도)을 재고, 그 면의 변 법선(육각=60°·사각=90° 간격,
+//      육각면은 등각육각형이라 정확히 60° 간격)과 맞춘 뒤 그 변 너머 이웃을 읽는다.
+// 미확정 = 유효한 이웃이긴 하나 아직 도면에서 측정 못 한 값. 추가 판독 필요.
+const FACE_UP = {
+  // 사각면 6
+  '禁聲作儛': '曲臂則盡',   // 📐 (도면 중앙 사각면, 글자 위=위쪽 면)
+  '有犯空過': '月鏡一曲',   // 미확정
+  '自唱自飮': '兩盞則放',   // 미확정
+  '三盞一去': '空詠詩過',   // 미확정
+  '飮盡大咲': '醜物莫放',   // 미확정
+  '衆人打鼻': '空詠詩過',   // 미확정
+  // 육각면 8
+  '任意請歌': '曲臂則盡',   // 📐 글자 위 ≈ 330°, 변 법선 326°
+  '曲臂則盡': '禁聲作儛',   // 미확정
+  '醜物莫放': '禁聲作儛',   // 미확정
+  '空詠詩過': '醜物莫放',   // 📐 글자 위 ≈ 147°, 변 법선 151°
+  '兩盞則放': '月鏡一曲',   // 미확정
+  '月鏡一曲': '曲臂則盡',   // 미확정
+  '弄面孔過': '有犯空過',   // 미확정
+  '自唱怪來晚': '月鏡一曲', // 미확정
+};
+
+// 면 3D 중심
+faces.forEach(f=>{ f.cen3=scale(f.vi.map(i=>VERTS[i]).reduce((a,v)=>add(a,v),[0,0,0]), 1/f.vi.length); });
+
+// FACE_UP → 면 평면 위의 3D 위쪽 벡터 → 면 로컬 2D 방향
+faces.forEach((f,fi)=>{
+  const want=FACE_UP[f.rule.hanja];
+  if(!want) throw new Error(`FACE_UP에 '${f.rule.hanja}' 항목이 없습니다`);
+  const link=adj[fi].find(a=>faces[a.nb].rule.hanja===want);
+  if(!link) throw new Error(`'${f.rule.hanja}'의 이웃이 아닙니다: '${want}' (이웃: ${adj[fi].map(a=>faces[a.nb].rule.hanja).join(', ')})`);
+  const [va,vb]=link.key.split(',').map(Number);
+  const mid=scale(add(VERTS[va],VERTS[vb]),0.5);
+  const up3=norm(sub(mid,f.cen3));            // 면 평면 안의 '위쪽'
+  f.upLocal=norm2([dot(up3,f.e1), dot(up3,f.e2)]); // 면 로컬 2D에서의 위쪽
+});
+
 // 짧은 변(육각-육각)을 우선 접기(fold)로 → 긴 변(사각-육각)이 풀칠 이음선이 되어 탭이 크고 깔끔
 adj.forEach(a=>a.sort((p,q)=>p.elen-q.elen));
 
@@ -169,9 +223,9 @@ const treeEdges=new Set(); // key of edges used as folds
 let comps=[];
 
 function placeRootAt(fi){
-  // 로컬 좌표 그대로 사용 (원점 부근)
+  // 로컬 좌표 그대로 사용 (원점 부근) → 회전 없음
   const pts=faces[fi].local.map(p=>[p[0],p[1]]);
-  placed[fi]={pts, comp:comps.length};
+  placed[fi]={pts, comp:comps.length, ang:0};
   return pts;
 }
 
@@ -200,10 +254,12 @@ function tryPlaceChild(pi, fi, key){
       if(convexOverlap(cand, placed[k].pts)) return null;
     }
   }
-  return cand;
+  return {pts:cand, ang}; // ang: 면 로컬 → 페이지 좌표 회전량 (글자 방향 계산에 사용)
 }
 
-const MAX_FACES=7; // 서브넷당 최대 면 수 → 여러 페이지로 분할
+// 서브넷당 최대 면 수 → 여러 페이지로 분할.
+// 기본 7 = A4 2장(인쇄용). `--single`을 주면 14면을 한 장에 펼친다(실물 전개도와 대조용).
+const MAX_FACES = process.argv.includes('--single') ? 14 : 7;
 for(let start=0; start<faces.length; start++){
   if(placed[start]) continue;
   placeRootAt(start);
@@ -216,7 +272,7 @@ for(let start=0; start<faces.length; start++){
       if(count>=MAX_FACES) break;
       const cand=tryPlaceChild(pi,nb,key);
       if(cand){
-        placed[nb]={pts:cand, comp:placed[pi].comp};
+        placed[nb]={pts:cand.pts, comp:placed[pi].comp, ang:cand.ang};
         treeEdges.add(key+':'+Math.min(pi,nb)+'-'+Math.max(pi,nb));
         queue.push(nb);
         count++;
@@ -322,7 +378,9 @@ const compData=comps.map(c=>{
 compData.sort((a,b)=>(b.w*b.h)-(a.w*a.h));
 
 // A4 페이지 (mm)
-const PAGE_W=210, PAGE_H=297, MARGIN=10, HEADER=20;
+// 기본 A4. --single(14면 통짜)은 A4를 넘치므로 A3로 키운다.
+const SINGLE = MAX_FACES>7;
+const PAGE_W=SINGLE?297:210, PAGE_H=SINGLE?420:297, MARGIN=10, HEADER=20;
 const AREA_W=PAGE_W-2*MARGIN;
 const pages=[]; // each: {items:[{cid, x, y}], }
 function newPage(){ pages.push({items:[], cursorX:MARGIN, cursorY:MARGIN+HEADER, rowH:0}); return pages[pages.length-1]; }
@@ -425,22 +483,37 @@ pages.forEach((pg,pi)=>{
           L_num.push(`<text x="${lx.toFixed(2)}" y="${(ly+1).toFixed(2)}" font-size="3.2" fill="#000" text-anchor="middle" font-weight="700" font-family="${FONT}">${info.no}</text>`);
         }
       });
-      // (5) 한자 + 영문
-      const hanja=[...f.rule.hanja];
+      // (5) 한자(고증 세로쓰기: 각 열 위→아래, 열은 오른쪽→왼쪽) + 영문
+      // 면의 '위쪽'(FACE_UP)이 페이지 위에서 어느 방향인지 구해 글자 블록을 통째로 회전.
+      // 이 회전이 있어야 접었을 때 각 면의 글자 방향이 실물과 같아진다.
+      const pageUp=rot2(f.upLocal, placed[fi].ang);
+      const rotDeg=Math.atan2(pageUp[0], -pageUp[1])*180/Math.PI; // SVG 기준 텍스트 위쪽=(0,-1)
+      L_text.push(`<g transform="rotate(${rotDeg.toFixed(3)} ${cen[0].toFixed(2)} ${cen[1].toFixed(2)})">`);
+      const hanja=[...f.rule.hanja], N=hanja.length;
+      const cols=N<=1?1:2, rows=Math.ceil(N/cols);      // 실물 주사위: 최대 2열(오른쪽 ⌈N/2⌉자)
+      // 글자 폭은 페이지 x축이 아니라 '글자 기준 가로축'으로 재야 회전해도 안 삐져나온다
+      const rightAx=[-pageUp[1], pageUp[0]];
       let fxmin=Infinity,fxmax=-Infinity;
-      pts.forEach(p=>{fxmin=Math.min(fxmin,p[0]);fxmax=Math.max(fxmax,p[0]);});
+      pts.forEach(p=>{const d=(p[0]-cen[0])*rightAx[0]+(p[1]-cen[1])*rightAx[1]; fxmin=Math.min(fxmin,d); fxmax=Math.max(fxmax,d);});
       const usableW=(fxmax-fxmin)*0.80;
-      const baseFS=f.type==='sq'?7.5:6.8;
-      const fs=Math.max(4.2, Math.min(baseFS, usableW/hanja.length));
-      L_text.push(`<text x="${cen[0].toFixed(2)}" y="${(cen[1]-1).toFixed(2)}" font-size="${fs.toFixed(2)}" fill="#000" text-anchor="middle" font-family="${FONT}" font-weight="600" letter-spacing="0.3">${f.rule.hanja}</text>`);
+      const baseFS=f.type==='sq'?7.0:6.2;
+      const cell=Math.max(4.0, Math.min(baseFS, usableW/cols));
+      const gridH=rows*cell, gx0=cen[0]-(cols*cell)/2+cell/2, topY=cen[1]-gridH/2-1.5;
+      for(let i=0;i<N;i++){
+        const col=Math.floor(i/rows), r=i%rows;             // col 0=오른쪽 열, 각 열 위→아래
+        const tx=gx0+(cols-1-col)*cell, ty=topY+r*cell+cell/2;
+        L_text.push(`<text x="${tx.toFixed(2)}" y="${(ty+cell*0.35).toFixed(2)}" font-size="${cell.toFixed(2)}" fill="#000" text-anchor="middle" font-family="${FONT}" font-weight="600">${hanja[i]}</text>`);
+      }
       const en=f.rule.en;
       const words=en.split(' '); const lines=[]; let cur='';
       const maxc = f.type==='sq'?16:20;
       for(const w of words){ if((cur+' '+w).trim().length>maxc){ lines.push(cur.trim()); cur=w; } else cur+=' '+w; }
       if(cur.trim()) lines.push(cur.trim());
+      const enY0=topY+gridH+2.8;
       lines.forEach((ln,li)=>{
-        L_text.push(`<text x="${cen[0].toFixed(2)}" y="${(cen[1]+4.5+li*3.2).toFixed(2)}" font-size="2.9" fill="#000" text-anchor="middle" font-family="${FONT}">${ln.replace(/&/g,'&amp;').replace(/'/g,'&#39;')}</text>`);
+        L_text.push(`<text x="${cen[0].toFixed(2)}" y="${(enY0+li*3.2).toFixed(2)}" font-size="2.9" fill="#000" text-anchor="middle" font-family="${FONT}">${ln.replace(/&/g,'&amp;').replace(/'/g,'&#39;')}</text>`);
       });
+      L_text.push(`</g>`);
     }
   }
   // ---------- 페이지 콘텐츠를 usable 영역에 맞춰 확대 + 중앙 배치 (요청 2) ----------
@@ -489,8 +562,10 @@ ${svgPages.join('\n')}
 </script>
 </body></html>`;
 
-const outDir=process.argv[2]||'.';
-fs.writeFileSync(path.join(outDir,'juryeonggu_papercraft.html'), html, 'utf8');
+const outDir=process.argv.slice(2).find(a=>!a.startsWith('--'))||'.'; // 플래그는 경로로 오해하지 않게
+const outName = MAX_FACES>7 ? 'juryeonggu_papercraft_single.html' : 'juryeonggu_papercraft.html';
+fs.writeFileSync(path.join(outDir,outName), html, 'utf8');
+console.log('output:', outName);
 console.log('components:', comps.length, '| pages:', pages.length, '| seams:', seamCounter);
 console.log('comp face counts:', comps.map(c=>compFaces(c.id).length).join(', '));
 const USE_W=PAGE_W-2*MARGIN, USE_H=PAGE_H-MARGIN-(MARGIN+HEADER);

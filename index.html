@@ -58,6 +58,13 @@
       linear-gradient(160deg,#0d1a10 0%, #08120b 55%, #030805 100%);
     background-attachment:fixed;
   }
+  body[data-theme="mono"]{
+    background:
+      radial-gradient(900px 520px at 15% 8%, rgba(255,255,255,.10), transparent 60%),
+      radial-gradient(900px 520px at 85% 12%, rgba(255,255,255,.06), transparent 62%),
+      linear-gradient(160deg,#2b2b2b 0%, #161616 55%, #0b0b0b 100%);
+    background-attachment:fixed;
+  }
   /* ===== 라이트 모드: 밝은 배경(테마별 hue) ===== */
   body[data-mode="light"]{
     color:#2b1d12;
@@ -83,6 +90,12 @@
     background:
       radial-gradient(900px 520px at 15% 8%, rgba(60,220,110,.20), transparent 60%),
       linear-gradient(160deg,#eefff2 0%, #dcf5e2 55%, #ccf0d6 100%);
+    background-attachment:fixed;
+  }
+  body[data-mode="light"][data-theme="mono"]{
+    background:
+      radial-gradient(900px 520px at 15% 8%, rgba(0,0,0,.06), transparent 60%),
+      linear-gradient(160deg,#fbfbfb 0%, #efefef 55%, #e3e3e3 100%);
     background-attachment:fixed;
   }
   /* ===== 라이트 모드: UI 요소 색 반전 ===== */
@@ -552,23 +565,25 @@ const getDesc = rule => { const k=descKey(); return (typeof rule[k]==='string') 
 let lastShown = null; // 언어 전환 시 결과창 다시 그리기용
 
 // ---- 14가지 벌칙 데이터 (한자 / 한글 / 로마자 / 한국어 설명 / 영어 설명) ----
+// 배열 순서 = 면 위치(SQUARE_CENTERS/HEX_CENTERS) 배정.
+// 실물 전개도 사진의 인접 관계 + 방향(반시계) 제약으로 solve_assignment.js가 푼 결과이며 임의 순서가 아니다.
 const SQUARE_RULES = [
-  { hanja:'禁聲作舞', hangul:'금성작무', read:'Geumseong-jangmu', desc:'소리 없이 춤추기', descEn:'Dance without making a sound', descJa:'声を出さずに踊る' },
-  { hanja:'衆人打鼻', hangul:'중인타비', read:'Jungin-tabi', desc:'여러 사람이 코를 두드리기', descEn:'Let everyone tap your nose', descJa:'みんなに鼻を叩いてもらう' },
-  { hanja:'飮盡大笑', hangul:'음진대소', read:'Eumjin-daeso', desc:'술을 다 마시고 크게 웃기', descEn:'Drink it all and laugh out loud', descJa:'お酒を飲み干して大笑いする' },
-  { hanja:'三盞一去', hangul:'삼잔일거', read:'Samjan-ilgeo', desc:'한 번에 술 석 잔 마시기', descEn:'Down three cups in one go', descJa:'お酒を一気に三杯飲む' },
-  { hanja:'有犯空過', hangul:'유범공과', read:'Yubeom-gonggwa', desc:'덤벼드는 사람이 있어도 참고 가만히 있기', descEn:'Stay still even if someone provokes you', descJa:'からかわれてもじっと我慢する' },
-  { hanja:'自唱自飮', hangul:'자창자음', read:'Jachang-jaeum', desc:'스스로 노래 부르고 마시기', descEn:'Sing a song yourself, then drink', descJa:'自分で歌って、そのまま飲む' },
+  { hanja:'禁聲作儛', hangul:'금성작무', read:'Geumseong-jakmu', desc:'반주 없이 춤추기', descEn:'Dance with no music playing.', descJa:'伴奏なしで踊る' },
+  { hanja:'有犯空過', hangul:'유범공과', read:'Yubeom-gonggwa', desc:'다른 사람이 무슨 짓을 해도 참기', descEn:'Put up with whatever anyone does to you.', descJa:'他の人に何をされても我慢する' },
+  { hanja:'飮盡大咲', hangul:'음진대소', read:'Eumjin-daeso', desc:'받은 잔 다 마시고 크게 웃기', descEn:'Drain the cup you were given and laugh out loud.', descJa:'受けた盃を飲み干して大笑いする' },
+  { hanja:'衆人打鼻', hangul:'중인타비', read:'Jungin-tabi', desc:'여러 사람이 코 때리기', descEn:'Let everyone hit your nose.', descJa:'みんなに鼻を叩いてもらう' },
+  { hanja:'自唱自飮', hangul:'자창자음', read:'Jachang-jaeum', desc:'혼자 노래 부르고 혼자 마시기', descEn:'Sing by yourself, then drink by yourself.', descJa:'一人で歌って一人で飲む' },
+  { hanja:'三盞一去', hangul:'삼잔일거', read:'Samjan-ilgeo', desc:'세 잔을 한꺼번에 마시기', descEn:'Drink three cups at once.', descJa:'三杯を一気に飲む' },
 ];
 const HEX_RULES = [
-  { hanja:'曲臂則盡', hangul:'곡비즉진', read:'Gokbi-jeukjin', desc:'팔을 구부려 다 마시기', descEn:'Bend your arm and drink it all', descJa:'腕を曲げて飲み干す' },
-  { hanja:'弄面孔過', hangul:'농면공과', read:'Nongmyeon-gonggwa', desc:'얼굴 간지럼을 태워도 꼼짝 않기', descEn:'Stay still while your face is tickled', descJa:'顔をくすぐられても動かない' },
-  { hanja:'任意請歌', hangul:'임의청가', read:'Imui-cheongga', desc:'누구에게나 마음대로 노래 청하기', descEn:'Ask anyone you like to sing', descJa:'誰でも好きな人に歌をリクエストする' },
-  { hanja:'月鏡一曲', hangul:'월경일곡', read:'Wolgyeong-ilgok', desc:'월경 한 곡조 부르기', descEn:"Sing a verse of 'Wolgyeong'", descJa:'「月鏡」を一曲歌う' },
-  { hanja:'空詠詩過', hangul:'공영시과', read:'Gongyeong-sigwa', desc:'시 한 수 읊기', descEn:'Recite a poem', descJa:'詩を一首詠む' },
-  { hanja:'兩盞則放', hangul:'양잔즉방', read:'Yangjan-jeukbang', desc:'술 두 잔이 있으면 쏟아버리기', descEn:'If two cups are left, pour them out', descJa:'お酒が二杯あれば注ぎ捨てる' },
-  { hanja:'醜物莫放', hangul:'추물막방', read:'Chumul-makbang', desc:'더러운 물건을 버리지 않기', descEn:"Don't toss away the dirty thing", descJa:'汚いものを捨てずに持っておく' },
-  { hanja:'自唱怪來晚', hangul:'자창괴래만', read:'Jachang-goeraeman', desc:"스스로 '괴래만'이라는 노래 부르기", descEn:"Sing the song 'Goeraeman' yourself", descJa:'「怪来晩」という歌を自分で歌う' },
+  { hanja:'任意請歌', hangul:'임의청가', read:'Imui-cheongga', desc:'누구에게나 마음대로 노래 청하기', descEn:'Ask anyone you like to sing a song.', descJa:'誰にでも好きに歌をリクエストする' },
+  { hanja:'醜物莫放', hangul:'추물막방', read:'Chumul-makbang', desc:'부끄러운 것 내어 놓기', descEn:'Show everyone something embarrassing.', descJa:'恥ずかしいものを出して見せる' },
+  { hanja:'曲臂則盡', hangul:'곡비즉진', read:'Gokbi-jeukjin', desc:'옆 사람과 팔뚝 끼고 마시기 (러브샷)', descEn:'Link arms with the person next to you and drink (a "love shot").', descJa:'隣の人と腕を組んで飲む（ラブショット）' },
+  { hanja:'空詠詩過', hangul:'공영시과', read:'Gongyeong-sigwa', desc:'즉흥시 한 수 지어 읊기', descEn:'Compose a poem on the spot and recite it.', descJa:'即興で詩を一首作って詠む' },
+  { hanja:'兩盞則放', hangul:'양잔즉방', read:'Yangjan-jeukbang', desc:'연거푸 두 잔 마시기', descEn:'Drink two cups back to back.', descJa:'続けて二杯飲む' },
+  { hanja:'弄面孔過', hangul:'농면공과', read:'Nongmyeon-gonggwa', desc:'얼굴을 간질여도 가만히 있기', descEn:'Stay still even when someone tickles your face.', descJa:'顔をくすぐられてもじっとしている' },
+  { hanja:'月鏡一曲', hangul:'월경일곡', read:'Wolgyeong-ilgok', desc:'달을 보며 노래 한 곡 부르기', descEn:'Look at the moon and sing a song.', descJa:'月を見ながら一曲歌う' },
+  { hanja:'自唱怪來晚', hangul:'자창괴래만', read:'Jachang-goeraeman', desc:'혼자 노래하고 고래고래 소리 지르기', descEn:'Sing alone, then shout at the top of your lungs.', descJa:'一人で歌って大声で叫ぶ' },
 ];
 
 // 면적을 거의 같게: 꼭짓점 (0,±B,±C). 정규(C=2B) 대신 사각·육각 면적이 같아지는 비율 사용
@@ -611,6 +626,49 @@ function hexFaceVerts(center){
   return VERTS.filter(v=> v.x*sx>=0 && v.y*sy>=0 && v.z*sz>=0);
 }
 
+// ---- 면별 글자 방향(고증) ----
+// 각 면의 글자 '위쪽'이 어느 이웃 면 쪽을 향하는지로 정의한다.
+// 전개도(build_papercraft.js)의 FACE_UP과 반드시 동일하게 유지할 것.
+// 그래야 앱의 3D 주사위와 인쇄해 접은 종이 주사위가 같은 주령구가 된다.
+// 📐 = 목제주령구 전개도(자료/주령구 전개도.jpg)에서 각도로 측정한 값 (2026-07-26)
+// 미확정 = 유효한 이웃이긴 하나 아직 도면에서 측정 못 한 값. 추가 판독 필요.
+const FACE_UP = {
+  // 사각면 6
+  '禁聲作儛': '曲臂則盡',   // 📐
+  '有犯空過': '月鏡一曲',   // 미확정
+  '自唱自飮': '兩盞則放',   // 미확정
+  '三盞一去': '空詠詩過',   // 미확정
+  '飮盡大咲': '醜物莫放',   // 미확정
+  '衆人打鼻': '空詠詩過',   // 미확정
+  // 육각면 8
+  '任意請歌': '曲臂則盡',   // 📐
+  '曲臂則盡': '禁聲作儛',   // 미확정
+  '醜物莫放': '禁聲作儛',   // 미확정
+  '空詠詩過': '醜物莫放',   // 📐
+  '兩盞則放': '月鏡一曲',   // 미확정
+  '月鏡一曲': '曲臂則盡',   // 미확정
+  '弄面孔過': '有犯空過',   // 미확정
+  '自唱怪來晚': '月鏡一曲', // 미확정
+};
+
+const FACE_VERTS = new Map();
+SQUARE_CENTERS.forEach((c,i)=> FACE_VERTS.set(SQUARE_RULES[i].hanja, squareFaceVerts(c)));
+HEX_CENTERS.forEach((c,i)=> FACE_VERTS.set(HEX_RULES[i].hanja, hexFaceVerts(c)));
+
+function faceCenterOf(vs){
+  const c=new THREE.Vector3(); vs.forEach(v=>c.add(v)); return c.multiplyScalar(1/vs.length);
+}
+// 글자 위쪽 = 면 중심 → (FACE_UP이 지정한 이웃 면과 공유하는 모서리)의 중점 방향
+function faceUpVector(label){
+  const mine=FACE_VERTS.get(label), want=FACE_UP[label];
+  const theirs=FACE_VERTS.get(want);
+  if(!theirs) throw new Error(`FACE_UP['${label}'] = '${want}' 인데 그런 면이 없습니다`);
+  const shared=mine.filter(a=>theirs.some(b=>a.distanceTo(b)<1e-6));
+  if(shared.length!==2) throw new Error(`'${label}'와 '${want}'는 모서리를 공유하지 않습니다 (공유 꼭짓점 ${shared.length}개)`);
+  const mid=shared[0].clone().add(shared[1]).multiplyScalar(0.5);
+  return mid.sub(faceCenterOf(mine)).normalize();
+}
+
 // 긴 설명을 maxW 폭에 맞춰 줄바꿈
 function wrapText(g, text, maxW){
   const lines=[]; let line='';
@@ -627,25 +685,28 @@ function wrapText(g, text, maxW){
 // 각 테마: 면 배경 그라데이션(bg0→bg1), 한자/한글 글자색, 코어/모서리 색, 광택(rough/metal), 스와치색(sw)
 // 각 테마=색 계열(sw). 모드별 팔레트: dark(어두운 배경)→밝은 주령구 / light(밝은 배경)→어두운 주령구
 const THEMES = {
-  classic:{ name:{ko:'고전',en:'Classic',ja:'古典'}, sw:'#c9603a',
+  classic:{ name:{ko:'고전',en:'Classic',ja:'古典'}, sw:'#c9603a', glow:'#ffd9a0',
     dark: { bg0:'#f3e6cf', bg1:'#dcc79a', hanja:'#8a1e12', hangul:'#6a4520', edge:0xcaa46a, core:0xd8c090, rough:0.55, metal:0.10 },
     light:{ bg0:'#241a14', bg1:'#090a08', hanja:'#d8463a', hangul:'#e7c997', edge:0x4a3326, core:0x0c0907, rough:0.5,  metal:0.18 } },
-  hanji:{ name:{ko:'한지',en:'Hanji',ja:'韓紙'}, sw:'#e9d4a4',
+  hanji:{ name:{ko:'한지',en:'Hanji',ja:'韓紙'}, sw:'#e9d4a4', glow:'#ffcdb0',
     dark: { bg0:'#f9f0dc', bg1:'#e6d1a6', hanja:'#6a3410', hangul:'#5a3d22', edge:0xc8a970, core:0xe0cc9a, rough:0.7, metal:0.04 },
     light:{ bg0:'#3a2717', bg1:'#160e07', hanja:'#e0a050', hangul:'#e7c997', edge:0x6a4a2a, core:0x1a1108, rough:0.7, metal:0.06 } },
-  jade:{ name:{ko:'옥',en:'Jade',ja:'玉'}, sw:'#6fae92',
+  jade:{ name:{ko:'옥',en:'Jade',ja:'玉'}, sw:'#6fae92', glow:'#b8f5dd',
     dark: { bg0:'#e0f0e6', bg1:'#b6dcc6', hanja:'#1c5a3a', hangul:'#2f6a4a', edge:0x8fc2a4, core:0xc2ddce, rough:0.4,  metal:0.18 },
     light:{ bg0:'#16302a', bg1:'#07130f', hanja:'#eaf6e2', hangul:'#a9d8c4', edge:0x2f5a4a, core:0x0a1a14, rough:0.35, metal:0.25 } },
-  neon:{ name:{ko:'야광',en:'Neon',ja:'蛍光'}, sw:'#39ff14',
+  neon:{ name:{ko:'야광',en:'Neon',ja:'蛍光'}, sw:'#39ff14', glow:'#86ff66',
     dark: { bg0:'#d8ffe2', bg1:'#a6f0bc', hanja:'#0a6a26', hangul:'#12833a', edge:0x6fd090, core:0xbdf0cb, rough:0.45, metal:0.15 },
     light:{ bg0:'#0e1a12', bg1:'#05100a', hanja:'#39ff14', hangul:'#b6ffb0', edge:0x1f6a3a, core:0x06120a, rough:0.4,  metal:0.2 } },
+  mono:{ name:{ko:'흑백',en:'Mono',ja:'白黒'}, sw:'linear-gradient(135deg,#fff 0 48%,#111 52% 100%)', glow:'#cfe8ff',
+    dark: { bg0:'#ffffff', bg1:'#e9e9e9', hanja:'#0a0a0a', hangul:'#141414', edge:0x111111, core:0xffffff, rough:0.9,  metal:0.0 },
+    light:{ bg0:'#151515', bg1:'#000000', hanja:'#f4f4f4', hangul:'#dcdcdc', edge:0xf2f2f2, core:0x0a0a0a, rough:0.9,  metal:0.0 } },
 };
 const savedTheme=(()=>{ try{ const t=localStorage.getItem('jurenggu.theme'); return THEMES[t]?t:'classic'; }catch(e){ return 'classic'; } })();
 const savedMode=(()=>{ try{ const m=localStorage.getItem('jurenggu.mode'); return (m==='light'||m==='dark')?m:'dark'; }catch(e){ return 'dark'; } })();
 let MODE=savedMode;
 let THEME=THEMES[savedTheme][MODE];
 
-// 텍스처. full=true: 한자+한글+설명(기본 주령구), full=false: 설명만(수정 내용). glow=true: 형광 발광
+// 텍스처. full=true: 한자만(기본 주령구), full=false: 설명만(수정 내용). glow=true: 형광 발광
 function makeTexture(rule, hanjaColor=THEME.hanja, hangulColor=THEME.hangul, glow=false, full=true, emissive=false){
   const S=320, c=document.createElement('canvas'); c.width=c.height=S;
   const g=c.getContext('2d');
@@ -660,12 +721,12 @@ function makeTexture(rule, hanjaColor=THEME.hanja, hangulColor=THEME.hangul, glo
   if(full){
     // ===== 기본 주령구: 한자 + 한글 + 설명(박스), 면 안에 자동 맞춤 =====
     const chars=[...(rule.hanja||'')];
-    const hg=readingOf(rule);
-    const ds='';   // 설명은 면에 표시하지 않음 (한자+읽기만)
+    const hg='';   // 한글 읽기는 면에 표시하지 않음 (벌칙 결정 시 결과 패널에서 읽는 법 제공)
+    const ds='';   // 설명도 면에 표시하지 않음 (한자만)
     const HF=42, GF=19, DF=15, GAP=7, PADX=10, PADY=6;
     const N=chars.length;
-    const rows=N?Math.max(1,Math.round(Math.sqrt(N))):0;
-    const cols=N?Math.ceil(N/rows):0;
+    const cols=N?(N<=1?1:2):0;              // 실물: 2열 (오른쪽 열부터)
+    const rows=N?Math.ceil(N/cols):0;       // 오른쪽 열 높이 = ⌈N/2⌉ (4자→2, 5자→3)
     const cell=HF*1.14, hanjaH=rows*cell;
 
     g.font=`500 ${DF}px "Noto Sans KR", sans-serif`;
@@ -692,15 +753,15 @@ function makeTexture(rule, hanjaColor=THEME.hanja, hangulColor=THEME.hangul, glo
     const s=Math.min(1.25, R/maxDist);
 
     let y=160-(totalH*s)/2;
-    if(N){                                  // 한자: 입력 순서 그대로
+    if(N){                                  // 한자: 실물 주사위 배열 — 세로쓰기, 오른쪽 열 먼저(오→왼), 위→아래
       g.fillStyle=hanjaColor;
       g.shadowColor=glow?hanjaColor:'rgba(0,0,0,.6)'; g.shadowBlur=glow?15*s:4*s;
       g.font=`900 ${HF*s}px "Noto Serif KR", serif`;
-      const cs=cell*s; let idx=0;
-      for(let r=0;r<rows && idx<N;r++){
-        const inRow=Math.min(cols, N-idx);
-        const rsx=160-(inRow*cs)/2+cs/2, cy=y+r*cs+cs/2;
-        for(let cl=0;cl<inRow;cl++) g.fillText(chars[idx++], rsx+cl*cs, cy);
+      const cs=cell*s, x0=160-(cols*cs)/2+cs/2;
+      for(let i=0;i<N;i++){
+        const col=Math.floor(i/rows), r=i%rows;      // col 0=오른쪽 열, 각 열 위→아래
+        const cx=x0+(cols-1-col)*cs, cy=y+r*cs+cs/2;
+        g.fillText(chars[i], cx, cy);
       }
       y+=hanjaH*s+GAP*s;
     }
@@ -759,16 +820,14 @@ function makeTexture(rule, hanjaColor=THEME.hanja, hangulColor=THEME.hangul, glo
 
 // 한 면(다각형) 메쉬 생성 + 노멀 반환
 const R_MAX = 1.02; // 텍스처 스케일 통일 (사각형 외접반경 = B = 1.0)
-function buildFace(rawVerts){
+function buildFace(rawVerts, upVec){
   const center=new THREE.Vector3();
   rawVerts.forEach(v=>center.add(v));
   center.multiplyScalar(1/rawVerts.length);
   const N=center.clone().normalize();
-  // 면 내 로컬 좌표축
-  let u = Math.abs(N.y)<0.95
-    ? new THREE.Vector3(0,1,0).cross(N).normalize()
-    : new THREE.Vector3(1,0,0).cross(N).normalize();
-  const v = N.clone().cross(u).normalize();
+  // 면 내 로컬 좌표축: v = 글자 위쪽(FACE_UP 고증), u = v×N (uv가 우수계를 유지하도록)
+  const v = upVec.clone().normalize();
+  const u = v.clone().cross(N).normalize();
 
   // 중심 기준 각도로 정렬
   const sorted=[...rawVerts].sort((a,b)=>{
@@ -834,7 +893,7 @@ die.add(edges);
 // 14개 텍스처 면
 const faces=[]; // {normal, rule, type}
 function addFace(rawVerts, rule, type){
-  const {geo,normal}=buildFace(rawVerts);
+  const {geo,normal}=buildFace(rawVerts, faceUpVector(rule.hanja));
   const base=makeTexture(rule);
   const mat=new THREE.MeshStandardMaterial({
     map:base, roughness:THEME.rough, metalness:THEME.metal, side:THREE.DoubleSide
@@ -1035,15 +1094,15 @@ document.getElementById('confirmEdit').addEventListener('click',()=>{
   editBtn.textContent=S().editForfeits;
 });
 
-// ---- 선택된 면 형광 발광 ----
-const NEON_HANJA='#39ff14', NEON_HANGUL='#b6ffb0';
-// 당첨 면: map=현재 모드 배경+초록 글자, emissiveMap=검은 배경+글자(→ 글자만 발광)
+// ---- 선택된 면 파스텔 LED 발광 ----
+// 당첨 면: 발광색은 테마별 파스텔(THEME.glow). map=현재 모드 배경+파스텔 글자, emissiveMap=검은 배경+글자(→ 글자만 발광)
+function glowColor(){ return (THEMES[curThemeName] && THEMES[curThemeName].glow) || '#ffd9a0'; }
 function applyLitTextures(f){
-  const full=!f.edited;
+  const full=!f.edited, gc=glowColor();
   if(f.neonTex) f.neonTex.dispose();
   if(f.neonEmis) f.neonEmis.dispose();
-  f.neonTex =makeTexture(f.rule, NEON_HANJA, NEON_HANGUL, true, full, false);
-  f.neonEmis=makeTexture(f.rule, NEON_HANJA, NEON_HANGUL, true, full, true);
+  f.neonTex =makeTexture(f.rule, gc, gc, true, full, false);
+  f.neonEmis=makeTexture(f.rule, gc, gc, true, full, true);
   f.mat.map=f.neonTex; f.mat.emissiveMap=f.neonEmis;
 }
 function unlightFaces(){
@@ -1059,7 +1118,7 @@ function lightFace(idx){
   unlightFaces();
   const f=faces[idx];
   applyLitTextures(f);
-  f.mat.emissive.setHex(0xffffff); f.mat.emissiveIntensity=1.7;
+  f.mat.emissive.setHex(0xffffff); f.mat.emissiveIntensity=1.25;   // 파스텔 LED: 은은하게
   f.mat.needsUpdate=true; f.lit=true;
 }
 

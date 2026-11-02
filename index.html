@@ -1144,9 +1144,23 @@ function lightFace(idx){
   f.mat.needsUpdate=true; f.lit=true;
 }
 
+// 진동(햅틱): iOS 앱(Capacitor Haptics 플러그인)에서만 동작, 웹·안드로이드 TWA에서는 아무 일도 안 함
+const Haptics=window.Capacitor?.Plugins?.Haptics;
+// (iOS의 selectionChanged는 selectionStart~selectionEnd 사이에서만 울린다)
+function haptic(kind){
+  if(!Haptics) return;
+  const call={
+    throw:()=>{ Haptics.impact({style:'HEAVY'}); return Haptics.selectionStart(); },
+    tick:()=>Haptics.selectionChanged(),
+    land:()=>{ Haptics.selectionEnd(); return Haptics.notification({type:'SUCCESS'}); },
+  }[kind];
+  try{ Promise.resolve(call()).catch(()=>{}); }catch(e){}
+}
+
 function startRoll(){
   if(roll.active || !gameStarted) return;
   roll.active=true; hasRolled=true;
+  haptic('throw');
   roll.playerIdx=curIdx;
   unlightFaces();
   rollBtn.disabled=true;
@@ -1164,6 +1178,7 @@ function startRoll(){
   roll.dur=2.4;
   roll.t0=performance.now();
   roll.idx=idx;
+  roll.ticks=0;
 }
 
 function updateRoll(now){
@@ -1175,10 +1190,14 @@ function updateRoll(now){
   let w = p<0.6 ? 0 : (p-0.6)/0.4;
   w = w*w*(3-2*w);
   die.quaternion.copy(tumble).slerp(roll.target, w);
+  // 구르는 동안 반 바퀴마다 '딸깍' — 감속에 맞춰 간격이 저절로 벌어진다
+  const ticks=Math.floor(roll.spins*ease/Math.PI);
+  if(ticks>roll.ticks){ roll.ticks=ticks; haptic('tick'); }
   if(p>=1){
     die.quaternion.copy(roll.target);
     roll.active=false;
     rollBtn.disabled=false;
+    haptic('land');
     lightFace(roll.idx);
     showResult(faces[roll.idx], roll.playerIdx);
     nextTurn();

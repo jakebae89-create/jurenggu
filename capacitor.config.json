@@ -1,0 +1,10 @@
+{
+  "appId": "com.juryeonggu.app",
+  "appName": "Juryeonggu",
+  "webDir": "www",
+  "backgroundColor": "#150a26",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#150a26"
+  }
+}

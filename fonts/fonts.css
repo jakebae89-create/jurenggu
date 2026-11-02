@@ -1,0 +1,12 @@
+/* iOS 앱(Capacitor) 전용 로컬 폰트 — 웹은 Google Fonts를 그대로 쓴다.
+   생성: scripts/make_app_fonts.py (Noto Sans/Serif KR, SIL OFL 1.1) */
+@font-face{
+  font-family:"Noto Sans KR";
+  src:url("./NotoSansKR-subset.woff2") format("woff2");
+  font-weight:100 900; font-style:normal; font-display:block;
+}
+@font-face{
+  font-family:"Noto Serif KR";
+  src:url("./NotoSerifKR-subset.woff2") format("woff2");
+  font-weight:200 900; font-style:normal; font-display:block;
+}

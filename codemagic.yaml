@@ -1,0 +1,71 @@
+# 주령구 iOS 클라우드 빌드 (맥 없이 앱스토어 올리기) — 가챠밥(gacha-lunch)과 같은 구조
+#
+# Codemagic이 맥 머신에서 ios/ 프로젝트를 빌드하고 TestFlight까지 올려준다.
+#
+# ── 미리 해둬야 하는 것 (1회) ──
+# 1) Codemagic GitHub App에 jurenggu 저장소 접근 추가
+#    (가챠밥 때는 gacha-lunch 한 곳에만 설치했으므로 저장소를 추가해야 보인다)
+#    → Codemagic에서 Add application → jakebae89-create/jurenggu
+# 2) App Store Connect API 키는 팀 단위라 가챠밥 때 등록한 "gachalunch" 통합을 그대로 쓴다
+# 3) Apple Developer → Identifiers 에 번들 ID com.juryeonggu.app 등록,
+#    App Store Connect에서 앱 레코드 생성 후 "앱 정보 → Apple ID" 숫자를 아래 APP_STORE_APP_ID 에 적을 것
+
+workflows:
+  juryeonggu-ios:
+    name: 주령구 iOS (App Store)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    integrations:
+      app_store_connect: gachalunch
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.juryeonggu.app
+      vars:
+        XCODE_WORKSPACE: "App.xcworkspace"
+        XCODE_SCHEME: "App"
+        APP_STORE_APP_ID: 0000000000 # App Store Connect > 앱 > 앱 정보 > Apple ID
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # 로컬 문서 도구용 의존성, 빌드엔 불필요
+      node: 20
+      xcode: latest
+      cocoapods: default
+
+    scripts:
+      - name: npm 의존성 설치
+        script: npm ci
+
+      - name: 웹 자산 빌드 + iOS 프로젝트 동기화
+        script: |
+          npm run build:www
+          npx cap sync ios   # www/ → ios/App/App/public 복사 + pod install
+
+      - name: 코드 서명 프로파일 적용
+        script: xcode-project use-profiles
+
+      - name: 빌드 번호 지정
+        script: |
+          cd $CM_BUILD_DIR/ios/App
+          # TestFlight에 이미 올라간 번호 다음 값 (중복 업로드 거부 방지)
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APP_ID" || echo 0)
+          agvtool new-version -all $(($LATEST + 1))
+
+      - name: IPA 빌드
+        script: |
+          cd $CM_BUILD_DIR/ios/App
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - ios/App/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        # 가챠밥에서 확인: true면 Beta App Review 정보가 없다며 후처리가 실패한다. 내부 테스트는 이것 없이 설치됨.
+        submit_to_testflight: false
+        # 처음엔 TestFlight에서 직접 확인한 뒤 수동 제출
+        submit_to_app_store: false

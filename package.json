@@ -1,0 +1,21 @@
+{
+  "name": "jurenggu",
+  "version": "1.0.0",
+  "private": true,
+  "description": "주령구(酒令具) 14면 주사위 — 웹(GitHub Pages)/안드로이드 TWA/iOS(Capacitor)",
+  "scripts": {
+    "build:www": "node scripts/build-www.mjs",
+    "sync:ios": "npm run build:www && cap sync ios",
+    "open:ios": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/haptics": "^7.0.0",
+    "@capacitor/ios": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0",
+    "docx": "^9.7.0",
+    "playwright": "^1.60.0"
+  }
+}

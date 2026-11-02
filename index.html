@@ -35,6 +35,8 @@
     min-height:100vh; min-height:100dvh;
     display:flex; flex-direction:column; align-items:center;
     overflow-x:hidden;
+    /* 노치·홈 바 영역 비우기 (viewport-fit=cover인 iOS 앱/Safari. 안드로이드는 0) */
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
   /* 테마별 페이지 배경 (classic은 위 기본 배경 사용) */
   body[data-theme="hanji"]{
@@ -285,7 +287,7 @@
   @media (max-width:340px){ header h1{ font-size:18px; letter-spacing:1px; } }
 
   #langBtn{
-    position:fixed; top:8px; right:8px; z-index:30;
+    position:fixed; top:calc(8px + env(safe-area-inset-top)); right:calc(8px + env(safe-area-inset-right)); z-index:30;
     background:rgba(40,28,20,.7); border:1px solid #5a4636; color:#e7c997;
     border-radius:999px; padding:5px 13px; font-size:12px; font-weight:700;
     font-family:inherit; cursor:pointer; backdrop-filter:blur(4px); letter-spacing:.5px;
@@ -294,7 +296,7 @@
 
   /* ☰ 설정 버튼 (좌측 상단) */
   #gearBtn{
-    position:fixed; top:8px; left:8px; z-index:30;
+    position:fixed; top:calc(8px + env(safe-area-inset-top)); left:calc(8px + env(safe-area-inset-left)); z-index:30;
     display:flex; align-items:center; justify-content:center;
     width:34px; height:30px; padding:0;
     background:rgba(40,28,20,.7); border:1px solid #5a4636; color:#e7c997;
@@ -307,6 +309,7 @@
   #settings{
     position:fixed; inset:0; z-index:50;
     display:flex; align-items:center; justify-content:center;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
     background:rgba(0,0,0,.55); backdrop-filter:blur(2px);
   }
   #settings[hidden]{ display:none; }

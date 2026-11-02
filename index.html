@@ -187,7 +187,9 @@
     padding:3px 12px; border-radius:999px; margin-bottom:12px;
   }
   #result .hanja{ font-family:"Noto Serif KR",serif; font-weight:900; font-size:40px; letter-spacing:8px; color:#b5302a;}
-  #result .hanja .read{ font-family:"Noto Sans KR",sans-serif; font-weight:700; font-size:.46em; letter-spacing:1px; color:#7a4b1e; vertical-align:middle; }
+  #result .hanja .read{ font-family:"Noto Sans KR",sans-serif; font-weight:700; font-size:.46em; letter-spacing:1px; color:#7a4b1e; vertical-align:middle;
+    /* 로마자 읽기(Chumul-makbang)가 하이픈에서 쪼개지지 않고 통째로 다음 줄로 넘어가게 */
+    display:inline-block; white-space:nowrap; }
   #result .hanja.penalty{ font-size:28px; letter-spacing:1px; line-height:1.4; }
   #result .hangul{ font-size:18px; font-weight:700; color:#5a3c20; margin-top:6px; letter-spacing:3px;}
   #result .desc{ font-size:17px; color:#3a2a1a; margin-top:14px; line-height:1.5; }

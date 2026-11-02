@@ -29,6 +29,13 @@ for (const name of include) {
 // 각 치환은 정확히 한 번 맞아야 한다. index.html이 바뀌어 안 맞으면 조용히 넘어가지 말고 빌드를 깬다.
 const patches = [
   {
+    // iOS는 글자 16px 미만 입력칸을 누르면 화면을 확대하고 되돌리지 않는다(이름 입력칸 15px).
+    // 아이폰 12 mini에서 1.07배로 굳어 오른쪽·아래 버튼이 화면 밖으로 밀렸다. 앱에선 확대 자체를 막는다.
+    what: "입력칸 자동 확대 방지",
+    from: '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />',
+    to: '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />',
+  },
+  {
     what: "Google Fonts → 로컬 폰트",
     from: /<link rel="preconnect" href="https:\/\/fonts\.googleapis\.com" \/>\s*<link rel="preconnect" href="https:\/\/fonts\.gstatic\.com" crossorigin \/>\s*<link href="https:\/\/fonts\.googleapis\.com\/css2[^>]*>/,
     to: '<link rel="stylesheet" href="./fonts/fonts.css" />',

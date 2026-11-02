@@ -222,7 +222,7 @@ Korean Folk Dice: Juryeonggu
 | 지원 URL (필수) | `https://jakebae89-create.github.io/jurenggu/support.html` |
 | 마케팅 URL (선택) | `https://jakebae89-create.github.io/jurenggu/` |
 | 개인정보처리방침 URL (필수) | `https://jakebae89-create.github.io/jurenggu/privacy.html` |
-| 저작권 | `2026 Junseok Bae` |
+| 저작권 | `2026 Joonseok Bae` |
 | 가격 | 유료 — Play와 같은 **$0.99 가격대** 권장. **유료 앱 계약이 '활성'이어야 선택 가능** |
 | 인앱 구입 | 없음 |
 | 판매 국가 | 전체. 한국은 GRAC가 "등급분류 대상 아님"으로 안내(2026-08-22), 애플은 자체 등급을 쓰므로 포함해 제출 — 막히면 그때 한국만 제외 |

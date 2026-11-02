@@ -26,7 +26,7 @@ workflows:
       vars:
         XCODE_WORKSPACE: "App.xcworkspace"
         XCODE_SCHEME: "App"
-        APP_STORE_APP_ID: 0000000000 # App Store Connect > 앱 > 앱 정보 > Apple ID
+        APP_STORE_APP_ID: 6829774847 # App Store Connect > 앱 > 앱 정보 > Apple ID
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # 로컬 문서 도구용 의존성, 빌드엔 불필요
       node: 20
       xcode: latest
